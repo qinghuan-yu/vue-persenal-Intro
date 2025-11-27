@@ -162,10 +162,10 @@ export default {
 /* 侧边栏容器 */
 .sidebar {
   position: fixed;
-  left: -350px; /* 初始状态下隐藏在左侧 */
+  left: -360px; /* 初始状态下隐藏在左侧 */
   top: 0;
   height: 100%;
-  width: 350px; /* 侧边栏宽度 */
+  width: 360px; /* 侧边栏宽度 */
   background: transparent; /* 透明背景 */
   z-index: 1000; /* 层级 */
   transition: left 0.6s ease; /* 左侧位置变化的动画 */
