@@ -185,7 +185,7 @@ export default {
 
 /* 侧边栏的竖线 */
 .vertical-line {
-  width: 2px; /* 竖线宽度 */
+  width: 1px; /* 竖线宽度 */
   background-color: #fff; /* 竖线颜色 */
   position: absolute;
   left: 100%; /* 定位到侧边栏的右边缘 */
@@ -213,7 +213,7 @@ export default {
   background: none;
   border: none;
   padding: 0;
-  margin-bottom: 70px; /* 按钮之间的垂直间距 */
+  margin-bottom: 90px; /* 按钮之间的垂直间距 */
   font-family: 'Font', sans-serif; /* 字体 */
   font-size: 30px; /* 字体大小 */
   color: #fff; /* 字体颜色 */

@@ -19,6 +19,7 @@ body {
 
 /* 顶部导航栏 */
 .navbar {
+  height: 10%; /* 固定高度为 10% */
   /* 相对定位 */
   position: relative;
   /* 使用 Flexbox 布局 */
@@ -29,8 +30,8 @@ body {
   align-items: center;
   /* 导航项之间的响应式间距 */
   gap: clamp(24px, 5vw, 80px);
-  /* 导航栏的响应式内边距 */
-  padding: clamp(8px, 0vw, 20px) clamp(32px, 4vw, 100px);
+  /* 移除上下内边距，保留左右内边距 */
+  padding: 0 clamp(32px, 4vw, 100px);
   /* 背景色为黑色 */
   background-color: #000000;
 }
@@ -79,13 +80,12 @@ body {
 
 /* 页面主要内容容器 */
 .page-container {
+  height: 80%; /* 固定高度为 80% */
   /* 垂直排列 */
   display: flex;
   flex-direction: column;
   /* 子项拉伸以适应容器 */
   align-items: stretch;
-  /* 占据剩余空间 */
-  flex: 1;
   /* 防止 flex 容器溢出 */
   min-height: 0;
 }
@@ -94,17 +94,17 @@ body {
 .divider {
   margin: 0;
   border: none;
-  /* 2像素白色实线上边框 */
-  border-top: 2px solid #ffffff;
+  /* 1像素白色实线上边框 */
+  border-top: 1px solid #ffffff;
   width: 100%;
 }
 
 /* 路由视图的过渡容器 */
 .transition-viewport {
   position: relative;
-  /* 自动伸缩 */
-  flex: 1 1 auto;
-  min-height: 0;
+  /* 自动伸缩以填充可用空间 */
+  flex: 1;
+  height: 100%;
   /* 隐藏溢出内容 */
   overflow: hidden;
 }
@@ -177,11 +177,14 @@ body {
 
 /* 底部信息面板 */
 .info-panel {
+  height: 10%; /* 固定高度为 10% */
   display: flex;
-  /* 居中 */
+  /* 水平居中 */
   justify-content: center;
-  /* 响应式内边距 */
-  padding: clamp(16px, 4vw, 48px) 0 clamp(32px, 6vw, 72px);
+  /* 垂直居中 */
+  align-items: center;
+  /* 移除所有内边距 */
+  padding: 0;
 }
 
 /* 信息显示/隐藏的切换按钮 */
@@ -200,8 +203,8 @@ body {
 
 /* 信息切换按钮的聚焦样式 */
 .info-toggle:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 4px;
+  outline: 1px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 1px;
 }
 
 /* 信息覆盖层的淡入淡出动画 */
