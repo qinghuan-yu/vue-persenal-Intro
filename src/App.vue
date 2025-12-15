@@ -14,9 +14,6 @@
       <div class="sidebar-item" @click="handleSidebarNav('/')">
         <span>合作</span><span class="sidebar-sub">COLLAB</span>
       </div>
-      <div class="sidebar-item" @click="handleSidebarNav('/saturn-system')">
-        <span>3D 星系</span><span class="sidebar-sub">GALAXY</span>
-      </div>
       <div class="sidebar-item" @click="handleSidebarNav('/')">
         <span>联系方式</span><span class="sidebar-sub">CONTACT</span>
       </div>
