@@ -6,8 +6,8 @@ export function usePixiApp() {
   const graphics = new Graphics();
   
   // 参数配置
-  const PARTICLE_COUNT = 150;        // 粒子数量 (如果卡顿可减少)
-  const CONNECTION_DISTANCE = 120;   // 连线距离 (越大连线越多)
+  const PARTICLE_COUNT = 350;        // 粒子数量 (如果卡顿可减少)
+  const CONNECTION_DISTANCE = 200;   // 连线距离 (越大连线越多)
   const LINE_COLOR = 0x61b1d6;       // 连线颜色 (核心蓝)
 
   // 颜色定义
