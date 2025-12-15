@@ -1,47 +1,54 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import IndexPage from '../components/IndexPage.vue';
-import ChuanshuPage from '../components/ChuanShu.vue';
-import GouwuPage from '../components/GouWu.vue';
-import MintaPage from '../components/MinTai.vue';
-import SanqinPage from '../components/SanQin.vue';
-import YumenPage from '../components/YuMen.vue';
+import MainLayout from '../layouts/MainLayout.vue';
+import IntroIndex from '../views/Intro/Index.vue';
+import Personal from '../views/Intro/Personal.vue';
+import Skills from '../views/Intro/Skills.vue';
+import Ongoing from '../views/Intro/Ongoing.vue';
+import Finished from '../views/Intro/Finished.vue';
+import Links from '../views/Intro/Links.vue';
+import CollabIndex from '../views/Collab/Index.vue';
+import Music from '../views/Collab/Music.vue';
+import Dev from '../views/Collab/Dev.vue';
+import Contact from '../views/Contact/Index.vue';
 
 const routes = [
   {
     path: '/',
-    name: 'IndexPage',
-    component: IndexPage
+    redirect: '/intro',
+    component: MainLayout,
+    children: [
+      {
+        path: 'intro',
+        component: IntroIndex,
+        redirect: '/intro/personal',
+        children: [
+          { path: 'personal', component: Personal },
+          { path: 'skills', component: Skills },
+          { path: 'ongoing', component: Ongoing },
+          { path: 'finished', component: Finished },
+          { path: 'links', component: Links },
+        ],
+      },
+      {
+        path: 'collab',
+        component: CollabIndex,
+        redirect: '/collab/music',
+        children: [
+          { path: 'music', component: Music },
+          { path: 'dev', component: Dev },
+        ],
+      },
+      {
+        path: 'contact',
+        component: Contact,
+      },
+    ],
   },
-  {
-    path: '/川蜀',
-    name: 'ChuanshuPage',
-    component: ChuanshuPage
-  },
-  {
-    path: '/勾吴',
-    name: 'GouwuPage',
-    component: GouwuPage
-  },
-  {
-    path: '/闽台',
-    name: 'MintaPage',
-    component: MintaPage
-  },
-  {
-    path: '/三秦',
-    name: 'SanqinPage',
-    component: SanqinPage
-  },
-  {
-    path: '/玉门',
-    name: 'YumenPage',
-    component: YumenPage
-  }
 ];
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
-  routes
+  routes,
 });
 
 export default router;
