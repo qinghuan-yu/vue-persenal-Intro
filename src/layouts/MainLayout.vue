@@ -584,17 +584,24 @@ body {
 }
 
 /* Loader */
+/* Loader - 修复重影问题：改为全屏黑色遮罩 */
 .loader-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: fixed;        /* 1. 改为 fixed，确保锁死在屏幕上 */
+  top: 0;
+  left: 0;
+  width: 100vw;           /* 2. 宽度铺满 */
+  height: 100vh;          /* 3. 高度铺满 */
+  background-color: var(--color-bg); /* 4. 关键：加上黑色背景色，挡住下面内容 */
+  
+  /* 布局保持居中 */
   display: flex;
-  flex-direction: column; /* 关键：改为垂直方向分布，即上下排列 */
-  align-items: center;    /* 水平居中 */
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 9999;          /* 5. 确保层级最高 */
   text-align: center;
+  
+  /* ⚠️ 注意：删掉了原本的 transform: translate(-50%, -50%)，因为全屏布局不需要这个偏移了 */
 }
 
 /* 中文文本：去掉竖排属性，增加字间距以保持科技感 */
