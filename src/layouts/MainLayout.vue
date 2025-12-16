@@ -25,7 +25,7 @@
         </div>
       </div>
 
-      <div class="content-card" ref="contentCardRef">
+      <div class="content-card" :class="{ 'is-contact': isContactPage }" ref="contentCardRef">
         <div class="corner tl"></div><div class="corner tr"></div>
         <div class="corner bl"></div><div class="corner br"></div>
 
@@ -58,199 +58,490 @@
 </template>
 
 <script setup>
+
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+
 import { useRouter, useRoute } from 'vue-router';
+
 import gsap from 'gsap';
+
 import { usePixiApp } from '../composables/usePixiApp.js';
+
+// eslint-disable-next-line no-unused-vars
 import qqQrCode from '@/assets/QQ.png';
+// eslint-disable-next-line no-unused-vars
 import wechatQrCode from '@/assets/WeChat.png';
 
+
+
 const router = useRouter();
+
 const route = useRoute();
+
 const { init, destroy } = usePixiApp();
+
+
 
 let morphToShapes = null;
 
+
+
 // Refs
+
 const pixiContainer = ref(null);
+
 const sidebarRef = ref(null);
+
 const menuTriggerRef = ref(null);
+
 const timelineBarRef = ref(null);
+
 const contentCardRef = ref(null); 
+
 const cardHeaderRef = ref(null);  
+
 const clipperRef = ref(null);     
+
 const innerWrapperRef = ref(null);
+
 const loaderTextRef = ref(null);
 
+
+
 // State
+
 const isIntroPlaying = ref(true);
+
 const isSidebarOpen = ref(false);
+
 let isThrottled = false; // 用于滚轮节流
+
+
+
+const isContactPage = computed(() => route.path.includes('/contact'));
+
+
 
 // --- 动画逻辑 ---
 
+
+
 // 1. 离开动画
+
 const onLeave = (el, done) => {
+
   gsap.to(el, { 
+
       opacity: 0, 
+
       duration: 0.3, 
+
       ease: "power2.in", 
+
       onComplete: done 
+
   });
+
 };
+
+
 
 // 2. 进入动画
+
 const onEnter = (el, done) => {
+
   gsap.set(el, { opacity: 0 });
 
+
+
   nextTick(() => {
+
     document.fonts.ready.then(() => {
+
         if (!clipperRef.value || !innerWrapperRef.value) { done(); return; }
 
+
+
         const startHeight = clipperRef.value.offsetHeight;
+
         
+
         clipperRef.value.style.height = 'auto';
+
         const targetHeight = innerWrapperRef.value.offsetHeight;
+
         clipperRef.value.style.height = `${startHeight}px`;
 
+
+
         const tl = gsap.timeline({
+
             onComplete: () => {
+
                 if(clipperRef.value) clipperRef.value.style.height = 'auto';
+
                 done();
+
             }
+
         });
+
+
 
         tl.to(clipperRef.value, {
+
             height: targetHeight,
+
             duration: 0.5,
+
             ease: "power3.inOut" 
+
         });
 
+
+
         tl.to(el, {
+
             opacity: 1,
+
             duration: 0.4,
+
             ease: "power2.out"
+
         }, "-=0.2");
+
     });
+
   });
+
 };
 
+
+
 // --- 生命周期与粒子系统 ---
+
 onMounted(async () => {
+
   if (pixiContainer.value) {
+
     const controls = await init(pixiContainer.value);
+
     morphToShapes = controls.morphToShapes;
+
   }
 
+
+
   gsap.set([sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, cardHeaderRef.value], { autoAlpha: 0 });
+
   gsap.set(clipperRef.value, { height: 0 });
 
+
+
   const introTl = gsap.timeline({
+
     onComplete: () => {
+
       isIntroPlaying.value = false;
+
       if (clipperRef.value) clipperRef.value.style.height = 'auto';
+
     }
+
   });
 
+
+
   introTl
+
     .to(loaderTextRef.value, { autoAlpha: 0, duration: 0.5, delay: 1.5 })
+
     .add(() => gsap.set(contentCardRef.value, { backgroundColor: 'rgba(10, 10, 10, 0.6)', backdropFilter: 'blur(5px)' }))
+
     .to(contentCardRef.value, { borderTopColor: 'var(--border-tech)', borderBottomColor: 'var(--border-tech)', duration: 0.5 }, "<")
+
     .to(clipperRef.value, { height: () => innerWrapperRef.value.offsetHeight, duration: 0.8, ease: 'power3.inOut' }, "<")
+
     .to(innerWrapperRef.value, { autoAlpha: 1, duration: 0.5 })
+
     .to([sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, cardHeaderRef.value], { autoAlpha: 1, duration: 0.5, stagger: 0.1 });
+
     
+
   window.addEventListener('resize', handleResize);
+
 });
+
+
 
 watch(route, (newRoute) => {
+
     if (!morphToShapes) return;
 
-    if (newRoute.path.includes('/contact')) {
-        const shapes = [
-          {
-            source: qqQrCode,
-            options: { type: 'image', scale: 0.8 }
-          },
-          {
-            source: wechatQrCode,
-            options: { type: 'image', scale: 0.8 }
-          },
-          {
-            source: 'Reliarc.me@outlook.com',
-            options: { type: 'text', fontSize: 48, fontFamily: 'Arial', color: '#61b1d6' }
-          }
-        ];
-        morphToShapes(shapes);
-    } else if (newRoute.path.includes('/collab/music')) {
+
+
+            if (newRoute.path.includes('/contact')) {
+
+
+
+                const shapes = [
+
+
+
+                  // QR Codes are disabled for now, but code is kept.
+
+
+
+                  // // 1. 左侧二维码 (WeChat)
+
+
+
+                  // {
+
+
+
+                  //   source: wechatQrCode,
+
+
+
+                  //   options: {
+
+
+
+                  //       type: 'image',
+
+
+
+                  //       scale: 0.35 // 调整缩放，0.3~0.4 通常比较合适
+
+
+
+                  //   }
+
+
+
+                  // },
+
+
+
+                  // // 2. 右侧二维码 (QQ)
+
+
+
+                  // {
+
+
+
+                  //   source: qqQrCode,
+
+
+
+                  //   options: {
+
+
+
+                  //       type: 'image',
+
+
+
+                  //       scale: 0.35 
+
+
+
+                  //   }
+
+
+
+                  // },
+
+
+
+                  // 3. 底部文字 (Email)
+
+
+
+                                    {
+
+
+
+                                      source: 'Reliarc.me@outlook.com',
+
+
+
+                                      options: {
+
+
+
+                                          type: 'text',
+
+
+
+                                          fontSize: 100, // 字体稍微小一点，显得精致
+
+
+
+                                          fontFamily: 'Arial, sans-serif',
+
+
+
+                                          color: '#61b1d6' // 科技蓝
+
+
+
+                                      }
+
+
+
+                                    }
+
+
+
+                ];
+
+
+
+                morphToShapes(shapes);
+
+
+
+            } else if (newRoute.path.includes('/collab/music')) {
+
         morphToShapes([
+
             {
+
                 source: 'MUSIC',
+
                 options: {
+
                     type: 'text',
+
                     fontSize: 120,
+
                     fontFamily: 'Space Grotesk, sans-serif'
+
                 }
+
             }
+
         ]);
+
     } 
+
     else {
+
         morphToShapes([]);
+
     }
+
 }, { immediate: true, deep: true });
 
+
+
 onUnmounted(() => {
+
   destroy();
+
   window.removeEventListener('resize', handleResize);
+
 });
+
+
 
 const handleResize = () => {
+
     if (!isIntroPlaying.value && clipperRef.value && innerWrapperRef.value) {
+
         clipperRef.value.style.height = 'auto';
+
     }
+
 }
 
+
+
 // --- 导航逻辑 ---
+
 const currentRoute = computed(() => route.path);
+
 const rightNavItems = computed(() => {
+
     const section = route.path.split('/')[1];
+
     if (section === 'intro') return [
+
         { to: '/intro/personal', name: '个人', en_name: 'Personal' },
+
         { to: '/intro/skills', name: '技能', en_name: 'Skills' },
+
         { to: '/intro/ongoing', name: '项目', en_name: 'Ongoing' },
+
         { to: '/intro/finished', name: '作品', en_name: 'Finished' },
+
         { to: '/intro/links', name: '链接', en_name: 'Links' },
+
     ];
+
     if (section === 'collab') return [
+
         { to: '/collab/music', name: '音乐', en_name: 'Music' },
+
         { to: '/collab/dev', name: '开发', en_name: 'Dev' },
+
     ];
+
     return [];
+
 });
 
+
+
 const toggleSidebar = () => { if (!isIntroPlaying.value) isSidebarOpen.value = !isSidebarOpen.value; };
+
 const handleStageClick = () => { if (isSidebarOpen.value) isSidebarOpen.value = false; };
+
 const navigate = (path) => { if (route.path !== path) router.push(path); };
 
+
+
 // 滚轮切换逻辑 (恢复了完整逻辑，修复了 unused vars 错误)
+
 const handleWheel = (event) => {
+
   if (isSidebarOpen.value || isIntroPlaying.value) return;
+
   if (isThrottled) return;
+
   isThrottled = true;
+
   setTimeout(() => { isThrottled = false; }, 500);
 
+
+
   const navItems = rightNavItems.value;
+
   if (navItems.length <= 1) return;
+
   const currentIndex = navItems.findIndex(item => item.to === currentRoute.value);
+
   if (currentIndex === -1) return;
+
   
+
   const direction = event.deltaY > 0 ? 1 : -1;
+
   let nextIndex = currentIndex + direction;
+
   
+
   if (nextIndex < 0) nextIndex = 0;
+
   else if (nextIndex >= navItems.length) nextIndex = navItems.length - 1;
+
   
+
   if (nextIndex !== currentIndex) navigate(navItems[nextIndex].to);
+
 };
 
 </script>
@@ -568,6 +859,18 @@ body {
 
 .content-card:hover {
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.content-card.is-contact {
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+}
+
+.content-card.is-contact .corner,
+.content-card.is-contact .card-header {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* Clipper 容器：动画核心 */

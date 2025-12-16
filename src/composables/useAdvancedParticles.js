@@ -1,14 +1,12 @@
 import { Graphics } from 'pixi.js';
 
-// --- 整体配置 ---
-// 增加粒子总数以适应更复杂的形状，但NETWORK状态下只会使用一部分
-const PARTICLE_COUNT = 1500;
-const PARTICLE_SIZE_MIN = 1;
-const PARTICLE_SIZE_MAX = 2.0;
-const SAMPLING_DENSITY = 3;       // 提高采样密度以获取更清晰的形状
+// --- 整体配置 (Optimized for QR Code Clarity) ---
+const PARTICLE_COUNT = 6000;      // 提升粒子总数以填充细节
+const PARTICLE_SIZE_MIN = 0.8;    // 更细腻的点
+const PARTICLE_SIZE_MAX = 1.5;
 
 // --- 神经网络状态 (NETWORK) 配置 ---
-const NETWORK_PARTICLE_COUNT = 300; // NETWORK状态下实际显示的粒子数
+const NETWORK_PARTICLE_COUNT = 300;
 const PARTICLE_GROWTH_TIME = 8000;
 const DISTANCE_GROWTH_TIME = 10000;
 const MAX_CONNECTION_DISTANCE = 200;
@@ -18,16 +16,16 @@ const MOUSE_RADIUS_NETWORK = 60;
 const MOUSE_FORCE_NETWORK = 2;
 const RETURN_SPEED_NETWORK = 0.04;
 
-// --- 变形状态 (MORPH) 配置 (来自您的新要求) ---
+// --- 变形状态 (MORPH) 配置 ---
 const MORPH_CONFIG = {
-  DRAG: 0.92,         // 拖拽系数 (阻尼)
-  EASE: 0.15,         // 归位力度
-  MOUSE_REPULSION_SQ: 8000, // 鼠标斥力范围 (平方值以优化计算)
-  MOUSE_REPULSION_FORCE: 5, // 鼠标斥力强度
+  DRAG: 0.92,
+  EASE: 0.15,
+  MOUSE_REPULSION_SQ: 8000,
+  MOUSE_REPULSION_FORCE: 5,
 };
 
 // --- 颜色 ---
-const COLOR_ACCENT = 0x61b1d6;
+const COLOR_ACCENT = 0x61b1d6; // 科技蓝
 const COLOR_DARK_1 = 0x333333;
 const COLOR_DARK_2 = 0x555555;
 
@@ -52,11 +50,9 @@ class Particle {
         this.currentRenderAlpha = 0;
         this.visible = true;
         
-        // 通用物理属性
         this.vx = 0;
         this.vy = 0;
 
-        // NETWORK 状态专属属性
         this.baseVx = (Math.random() - 0.5) * 0.6;
         this.baseVy = (Math.random() - 0.5) * 0.6;
         const rand = Math.random();
@@ -70,22 +66,23 @@ class Particle {
             this.baseColor = COLOR_DARK_2;
             this.maxAlpha = 0.4;
         }
+
+        this.currentColor = this.baseColor;
+        this.targetColor = this.baseColor;
+
         this.breathPhase = Math.random() * Math.PI * 2;
         this.breathSpeed = 0.02 + Math.random() * 0.03;
         this.breathAmp = 0.3 + Math.random() * 0.2;
         this.fadeInFactor = initial ? 1 : 0;
 
-        // MORPH 状态专属属性
         this.targetX = this.x;
         this.targetY = this.y;
     }
 
     updateNetwork(w, h, mouseX, mouseY) {
-        // 速度回归到基础速度
         this.vx += (this.baseVx - this.vx) * RETURN_SPEED_NETWORK;
         this.vy += (this.baseVy - this.vy) * RETURN_SPEED_NETWORK;
 
-        // 计算鼠标斥力
         const dx = this.x - mouseX;
         const dy = this.y - mouseY;
         const distSq = dx * dx + dy * dy;
@@ -116,33 +113,71 @@ class Particle {
         if (this.x < -SCREEN_PADDING || this.x > w + SCREEN_PADDING || this.y < -SCREEN_PADDING || this.y > h + SCREEN_PADDING) {
             this.init(w, h, false);
         }
+        
+        // --- [新增] 颜色逻辑: 恢复到 baseColor ---
+        if (this.currentColor !== this.baseColor) {
+            const r1 = (this.currentColor >> 16) & 0xFF;
+            const g1 = (this.currentColor >> 8) & 0xFF;
+            const b1 = this.currentColor & 0xFF;
+            const r2 = (this.baseColor >> 16) & 0xFF;
+            const g2 = (this.baseColor >> 8) & 0xFF;
+            const b2 = this.baseColor & 0xFF;
+
+            const r = r1 + (r2 - r1) * 0.05;
+            const g = g1 + (g2 - g1) * 0.05;
+            const b = b1 + (b2 - b1) * 0.05;
+            this.currentColor = (r << 16) | (g << 8) | b;
+        }
     }
 
     updateMorph(mouseX, mouseY) {
         const dx = this.targetX - this.x;
         const dy = this.targetY - this.y;
         
-        const distMouseX = this.x - mouseX;
-        const distMouseY = this.y - mouseY;
-        const distMouseSq = distMouseX * distMouseX + distMouseY * distMouseY;
-        
-        let forceX = 0;
-        let forceY = 0;
+        // --- 扫码防抖：当粒子足够接近目标时，将其锁定 ---
+        const distToTargetSq = dx * dx + dy * dy;
+        if (distToTargetSq < 0.25) { // 0.5 * 0.5
+            this.x = this.targetX;
+            this.y = this.targetY;
+            this.vx = 0;
+            this.vy = 0;
+            this.currentColor = this.targetColor; // 锁定颜色
+        } else {
+            const distMouseX = this.x - mouseX;
+            const distMouseY = this.y - mouseY;
+            const distMouseSq = distMouseX * distMouseX + distMouseY * distMouseY;
+            
+            let forceX = 0;
+            let forceY = 0;
 
-        if (distMouseSq < MORPH_CONFIG.MOUSE_REPULSION_SQ) {
-            const force = (MORPH_CONFIG.MOUSE_REPULSION_SQ - distMouseSq) / MORPH_CONFIG.MOUSE_REPULSION_SQ;
-            forceX = distMouseX * force * MORPH_CONFIG.MOUSE_REPULSION_FORCE;
-            forceY = distMouseY * force * MORPH_CONFIG.MOUSE_REPULSION_FORCE;
+            if (distMouseSq < MORPH_CONFIG.MOUSE_REPULSION_SQ) {
+                const force = (MORPH_CONFIG.MOUSE_REPULSION_SQ - distMouseSq) / MORPH_CONFIG.MOUSE_REPULSION_SQ;
+                forceX = distMouseX * force * MORPH_CONFIG.MOUSE_REPULSION_FORCE;
+                forceY = distMouseY * force * MORPH_CONFIG.MOUSE_REPULSION_FORCE;
+            }
+
+            this.vx += dx * MORPH_CONFIG.EASE + forceX;
+            this.vy += dy * MORPH_CONFIG.EASE + forceY;
+            
+            this.vx *= MORPH_CONFIG.DRAG;
+            this.vy *= MORPH_CONFIG.DRAG;
+            
+            this.x += this.vx;
+            this.y += this.vy;
+            
+            // --- [新增] 颜色逻辑: 趋近 targetColor ---
+            const r1 = (this.currentColor >> 16) & 0xFF;
+            const g1 = (this.currentColor >> 8) & 0xFF;
+            const b1 = this.currentColor & 0xFF;
+            const r2 = (this.targetColor >> 16) & 0xFF;
+            const g2 = (this.targetColor >> 8) & 0xFF;
+            const b2 = this.targetColor & 0xFF;
+
+            const r = r1 + (r2 - r1) * MORPH_CONFIG.EASE;
+            const g = g1 + (g2 - g1) * MORPH_CONFIG.EASE;
+            const b = b1 + (b2 - b1) * MORPH_CONFIG.EASE;
+            this.currentColor = (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(b);
         }
-
-        this.vx += dx * MORPH_CONFIG.EASE + forceX;
-        this.vy += dy * MORPH_CONFIG.EASE + forceY;
-        
-        this.vx *= MORPH_CONFIG.DRAG;
-        this.vy *= MORPH_CONFIG.DRAG;
-        
-        this.x += this.vx;
-        this.y += this.vy;
 
         if (this.fadeInFactor < 1) this.fadeInFactor += 0.05;
         if (this.fadeInFactor > 1) this.fadeInFactor = 1;
@@ -154,8 +189,9 @@ class Particle {
         this.targetY = targetY;
         this.visible = true;
         this.fadeInFactor = 0;
-        this.vx = 0; // 重置速度，避免从NETWORK状态继承一个很大的初速度
+        this.vx = 0;
         this.vy = 0;
+        this.targetColor = this.baseColor; // 重置目标颜色
     }
     
     releaseToNetwork(w, h) {
@@ -227,9 +263,8 @@ export function useAdvancedParticles(app) {
 
         for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
-            // 只激活并显示NETWORK状态所需的粒子
             if (i < currentTargetCount) {
-                if (!p.visible) p.releaseToNetwork(w, h); // 如果之前不可见，则重新激活
+                if (!p.visible) p.releaseToNetwork(w, h);
                 p.visible = true;
             } else {
                 p.visible = false;
@@ -238,7 +273,7 @@ export function useAdvancedParticles(app) {
 
             p.updateNetwork(w, h, mouseX, mouseY);
             if (p.currentRenderAlpha > 0.01) {
-                 graphics.circle(p.x, p.y, p.radius).fill({ color: p.baseColor, alpha: p.currentRenderAlpha });
+                 graphics.circle(p.x, p.y, p.radius).fill({ color: p.currentColor, alpha: p.currentRenderAlpha });
             }
         }
         
@@ -272,7 +307,7 @@ export function useAdvancedParticles(app) {
             if (p.visible) {
                 p.updateMorph(mouseX, mouseY);
                 if (p.currentRenderAlpha > 0.01) {
-                    graphics.circle(p.x, p.y, p.radius).fill({ color: p.baseColor, alpha: p.currentRenderAlpha });
+                    graphics.circle(p.x, p.y, p.radius).fill({ color: p.currentColor, alpha: p.currentRenderAlpha });
                 }
             }
         }
@@ -305,7 +340,10 @@ export function useAdvancedParticles(app) {
                     offscreenCtx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
                     resolve(scanCanvas(scaledWidth, scaledHeight));
                 };
-                img.onerror = () => resolve([]);
+                img.onerror = (err) => {
+                    console.error('Image failed to load:', source, err);
+                    resolve([]);
+                }
             } else { // text
                 const fontSize = options.fontSize || 120;
                 const fontFamily = options.fontFamily || 'Arial';
@@ -325,14 +363,35 @@ export function useAdvancedParticles(app) {
         });
     }
 
+    // --- 核心修复：基于亮度提取粒子 ---
     function scanCanvas(width, height) {
         const points = [];
         const imageData = offscreenCtx.getImageData(0, 0, width, height);
         const data = imageData.data;
-        for (let y = 0; y < height; y += SAMPLING_DENSITY) {
-            for (let x = 0; x < width; x += SAMPLING_DENSITY) {
-                if (data[(y * width + x) * 4 + 3] > 128) {
-                    points.push({ x, y });
+
+        // 采样步长：越小越清晰，但粒子数会暴增
+        // 想要达到 GitHub 项目的效果，这里必须设为 1 或 2
+        const step = 2; 
+
+        for (let y = 0; y < height; y += step) {
+            for (let x = 0; x < width; x += step) {
+                const index = (y * width + x) * 4;
+                
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
+                const a = data[index + 3];
+
+                // 核心判定：只要不是纯黑 (RGB > 20) 且 不透明
+                if (a > 0 && (r > 20 || g > 20 || b > 20)) {
+                    // 将颜色转为 Hex 或 Pixi 能用的格式
+                    const color = (r << 16) | (g << 8) | b; 
+                    
+                    points.push({ 
+                        x, 
+                        y, 
+                        color // <--- 关键：把颜色带出去
+                    });
                 }
             }
         }
@@ -343,97 +402,116 @@ export function useAdvancedParticles(app) {
         const w = app.screen.width;
         const h = app.screen.height;
 
-        // --- 切换回 IDLE 状态 ---
-        if (!configs || configs.length === 0 || (configs.length === 1 && configs[0].shape === 'idle')) {
+        // 1. 如果为空，返回网络状态
+        if (!configs || configs.length === 0) {
             if (state === 'NETWORK') return; 
             state = 'NETWORK';
             startTime = null; 
             for (const p of particles) {
-                // 为粒子设置一个随机目标，让它们散开而不是回到(0,0)
                 p.targetX = Math.random() * w;
                 p.targetY = Math.random() * h;
             }
             return;
         }
 
-        // --- 切换到 MORPH 状态 ---
         state = 'MORPH';
         startTime = null; 
 
-        // 1. 并行获取所有形状的点数据
+        // 2. 加载资源
         const shapesData = await Promise.all(
             configs.map(config => 
                 getPointsFromSource(config.source, config.options)
                 .then(points => {
-                    if (points.length === 0) return null; // 如果某个形状无法加载，返回null
-                    
+                    if (points.length === 0) return null;
                     const bounds = {
                         minX: Math.min(...points.map(p => p.x)),
                         maxX: Math.max(...points.map(p => p.x)),
                         minY: Math.min(...points.map(p => p.y)),
                         maxY: Math.max(...points.map(p => p.y)),
                     };
-                    const width = bounds.maxX - bounds.minX;
-                    const height = bounds.maxY - bounds.minY;
-                    
-                    return { points, config, bounds, width, height };
+                    return { 
+                        points, 
+                        width: bounds.maxX - bounds.minX, 
+                        height: bounds.maxY - bounds.minY,
+                        bounds,
+                        // 关键：透传配置类型，用于后续分类
+                        type: config.options.type || 'text' 
+                    };
                 })
             )
         );
 
-        const validShapes = shapesData.filter(Boolean); // 过滤掉加载失败的形状
+        const validShapes = shapesData.filter(Boolean);
         if (validShapes.length === 0) {
-            console.warn("All shapes failed to load, returning to NETWORK.");
-            morphToShapes([]); // 返回IDLE状态
+            morphToShapes([]);
             return;
         }
         
-        // 2. 实现您的特定布局: 2个并排，1个在下方
-        let particleIndex = 0;
+        // --- 核心修改：智能分类布局 (Smart Wingman Layout) ---
         
-        // --- 上方并排的两个二维码 ---
-        const qrShapes = validShapes.filter(s => s.config.options.type === 'image');
-        const textShape = validShapes.find(s => s.config.options.type === 'text');
+        // A. 自动分类：挑出图片(二维码)和文字
+        const qrShapes = validShapes.filter(s => s.type === 'image');
+        const textShapes = validShapes.filter(s => s.type === 'text');
 
-        if (qrShapes.length > 0) {
-            const gap = 80; // 二维码之间的间距
-            const totalQRWidth = qrShapes.reduce((sum, s) => sum + s.width, 0) + (qrShapes.length - 1) * gap;
-            const maxQRHeight = Math.max(...qrShapes.map(s => s.height));
-            let currentX = (w - totalQRWidth) / 2;
-            const topOffsetY = (h - maxQRHeight) / 2 - (textShape ? textShape.height : 0); // 向上移动一点为文字留出空间
+        let particleIndex = 0;
+        const centerX = w / 2;
+        const centerY = h / 2;
+        
+        // 布局参数
+        const CENTER_SAFE_ZONE = 450; 
+        const QR_VERTICAL_OFFSET = -50; 
+        const TEXT_BOTTOM_OFFSET = 220; // 文字稍微再靠下一点，避免和 HTML 撞车
 
-            for (const shape of qrShapes) {
-                const offsetX = currentX - shape.bounds.minX;
-                const offsetY = topOffsetY - shape.bounds.minY;
-                
-                shuffleArray(shape.points);
-                for (const point of shape.points) {
-                    if (particleIndex < particles.length) {
-                        const p = particles[particleIndex++];
-                        p.moveTo(point.x + offsetX, point.y + offsetY);
+        // B. 放置左侧二维码 (取图片组的第1个)
+        if (qrShapes[0]) {
+            const shape = qrShapes[0];
+            const targetX = centerX - (CENTER_SAFE_ZONE / 2) - shape.width; 
+            const targetY = centerY - (shape.height / 2) + QR_VERTICAL_OFFSET;
+            fillParticles(shape, targetX, targetY);
+        }
+
+        // C. 放置右侧二维码 (取图片组的第2个)
+        if (qrShapes[1]) {
+            const shape = qrShapes[1];
+            const targetX = centerX + (CENTER_SAFE_ZONE / 2);
+            const targetY = centerY - (shape.height / 2) + QR_VERTICAL_OFFSET;
+            fillParticles(shape, targetX, targetY);
+        }
+
+        // D. 放置底部文字 (取文字组的第1个)
+        // 哪怕没有二维码，只要有文字，就会执行这里，并放在底部
+        if (textShapes[0]) {
+            const shape = textShapes[0];
+            const targetX = centerX - (shape.width / 2); // 水平居中
+            const targetY = centerY + TEXT_BOTTOM_OFFSET;
+            fillParticles(shape, targetX, targetY);
+        }
+
+        // 辅助函数：填充粒子
+        function fillParticles(shape, targetX, targetY) {
+            shuffleArray(shape.points);
+            for (const point of shape.points) {
+                if (particleIndex < particles.length) {
+                    const p = particles[particleIndex++];
+                    
+                    // 1. 设置位置
+                    const offsetX = targetX - shape.bounds.minX;
+                    const offsetY = targetY - shape.bounds.minY;
+                    p.moveTo(point.x + offsetX, point.y + offsetY);
+                    
+                    // 2. 【新增】设置颜色
+                    // 如果 point.color 存在（图片模式），就用图片的颜色
+                    // 如果是文字模式，就用统一的蓝色
+                    if (point.color !== undefined) {
+                        p.targetColor = point.color; 
+                    } else {
+                        p.targetColor = 0x61b1d6; // 默认科技蓝
                     }
                 }
-                currentX += shape.width + gap;
-            }
-        }
-        
-        // --- 下方的文字 ---
-        if (textShape) {
-            const topMargin = 50; // 与二维码的垂直间距
-            const textTopY = (h / 2) + topMargin; // 基于屏幕中心计算
-            const offsetX = (w - textShape.width) / 2 - textShape.bounds.minX;
-            const offsetY = textTopY - textShape.bounds.minY;
-            
-            shuffleArray(textShape.points);
-            for (const point of textShape.points) {
-                 if (particleIndex < particles.length) {
-                    const p = particles[particleIndex++];
-                    p.moveTo(point.x + offsetX, point.y + offsetY);
-                }
             }
         }
 
-        // 3. 隐藏所有未被使用的粒子
+        // E. 隐藏多余粒子
         for (let i = particleIndex; i < particles.length; i++) {
             particles[i].visible = false;
         }

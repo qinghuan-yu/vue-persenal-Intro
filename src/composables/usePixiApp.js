@@ -35,7 +35,7 @@ export function usePixiApp() {
     // 我们这里不需要额外操作，因为ParticleMorpher内部的逻辑是基于app.screen的
     
     // 保存控制函数，以便在init和destroy之间共享
-    exposedMorphToShapes = particles.morphToShape;
+    exposedMorphToShapes = particles.morphToShapes;
 
     return { morphToShapes: exposedMorphToShapes };
   };
