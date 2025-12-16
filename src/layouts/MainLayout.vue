@@ -40,31 +40,33 @@
         </div>
       </div>
 
-      <div class="content-card group">
-        <div class="corner tl"></div><div class="corner tr"></div>
-        <div class="corner bl"></div><div class="corner br"></div>
+      <div class="content-card group" ref="contentCardRef" style="overflow: hidden;">
+        <div ref="innerWrapperRef">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
 
-        <div class="status-row">
-          <div class="status-dot"></div>
-          <span class="status-text">SYSTEM // STANDBY</span>
-        </div>
+          <div class="status-row">
+            <div class="status-dot"></div>
+            <span class="status-text">SYSTEM // STANDBY</span>
+          </div>
 
-        <h1 class="glitch-title">
-          INFO<br>
-          <span style="color: var(--color-accent);">UNLOCKING</span>
-        </h1>
-        
-        <div class="view-container">
-          <router-view v-slot="{ Component }">
-            <transition 
-              :css="false" 
-              mode="out-in" 
-              @leave="onLeave"
-              @enter="onEnter"
-            >
-              <component :is="Component" :key="route.path" />
-            </transition>
-          </router-view>
+          <h1 class="glitch-title">
+            INFO<br>
+            <span style="color: var(--color-accent);">UNLOCKING</span>
+          </h1>
+          
+          <div class="view-container">
+            <router-view v-slot="{ Component }">
+              <transition 
+                :css="false" 
+                mode="out-in" 
+                @leave="onLeave"
+                @enter="onEnter"
+              >
+                <component :is="Component" :key="route.path" />
+              </transition>
+            </router-view>
+          </div>
         </div>
       </div>
     </section>
@@ -82,6 +84,10 @@ import { usePixiApp } from '../composables/usePixiApp.js';
 
 const router = useRouter();
 const route = useRoute();
+
+const contentCardRef = ref(null);
+const innerWrapperRef = ref(null);
+let resizeObserver = null;
 
 // --- Animations ---
 const transitionType = ref('parent');
@@ -252,10 +258,28 @@ onMounted(async () => {
   if (pixiContainer.value) {
     await init(pixiContainer.value);
   }
+
+  // Height animation logic
+  if (innerWrapperRef.value && contentCardRef.value) {
+    resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const newHeight = entry.target.offsetHeight;
+        gsap.to(contentCardRef.value, { 
+          height: newHeight, 
+          duration: 0.4, 
+          ease: 'power3.out' 
+        });
+      }
+    });
+    resizeObserver.observe(innerWrapperRef.value);
+  }
 });
 
 onUnmounted(() => {
   destroy();
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
 });
 </script>
 
