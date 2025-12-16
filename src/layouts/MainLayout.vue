@@ -4,21 +4,12 @@
 
     <div :class="['sidebar', { open: isSidebarOpen }]" ref="sidebarRef" style="opacity: 0; visibility: hidden;">
       <div class="sidebar-line"></div>
-
-      <router-link to="/intro" class="sidebar-item">
-        <span>介绍</span><span class="sidebar-sub">INTRO</span>
-      </router-link>
-      <router-link to="/collab" class="sidebar-item">
-        <span>合作</span><span class="sidebar-sub">COLLAB</span>
-      </router-link>
-      <router-link to="/contact" class="sidebar-item">
-        <span>联系方式</span><span class="sidebar-sub">CONTACT</span>
-      </router-link>
+      <router-link to="/intro" class="sidebar-item"><span>介绍</span><span class="sidebar-sub">INTRO</span></router-link>
+      <router-link to="/collab" class="sidebar-item"><span>合作</span><span class="sidebar-sub">COLLAB</span></router-link>
+      <router-link to="/contact" class="sidebar-item"><span>联系方式</span><span class="sidebar-sub">CONTACT</span></router-link>
     </div>
 
-    <div class="menu-trigger" @click="toggleSidebar" ref="menuTriggerRef" style="opacity: 0; visibility: hidden;">
-      MENU
-    </div>
+    <div class="menu-trigger" @click="toggleSidebar" ref="menuTriggerRef" style="opacity: 0; visibility: hidden;">MENU</div>
 
     <section id="main-stage" @click="handleStageClick">
       <div v-if="isIntroPlaying" ref="loaderTextRef" class="loader-container">
@@ -28,50 +19,35 @@
 
       <div class="timeline-bar" ref="timelineBarRef" style="opacity: 0; visibility: hidden;">
         <div class="timeline-line"></div>
-
-        <div v-for="(item, index) in rightNavItems" :key="index" :ref="el => navNodeRefs[item.to] = el"
-          :class="['nav-node', { active: currentRoute === item.to }]" @click="navigate(item.to)">
-          <div class="nav-label">
-            <span class="zh">{{ item.name }}</span>
-            <span class="en">{{ item.en_name }}</span>
-          </div>
+        <div v-for="(item, index) in rightNavItems" :key="index" :class="['nav-node', { active: currentRoute === item.to }]" @click="navigate(item.to)">
+          <div class="nav-label"><span class="zh">{{ item.name }}</span><span class="en">{{ item.en_name }}</span></div>
           <div class="nav-node-circle"></div>
         </div>
       </div>
 
-      <div class="content-card group" ref="contentCardRef">
-        
-        <div class="corner tl"></div>
-        <div class="corner tr"></div>
-        <div class="corner bl"></div>
-        <div class="corner br"></div>
+      <div class="content-card" ref="contentCardRef">
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
 
         <div class="card-header" ref="cardHeaderRef" style="opacity: 0; visibility: hidden;">
-            <div class="status-row">
-                <div class="status-dot"></div>
-                <span class="status-text">SYSTEM // STANDBY</span>
-            </div>
-            <h1 class="glitch-title">
-                INFO<br>
-                <span style="color: var(--color-accent);">UNLOCKING</span>
-            </h1>
+            <div class="status-row"><div class="status-dot"></div><span class="status-text">SYSTEM // ONLINE</span></div>
+            <h1 class="glitch-title">INFO<br><span style="color: var(--color-accent);">DATA_STREAM</span></h1>
         </div>
 
-        <div class="clipper-box" ref="clipperRef" style="overflow: hidden; height: auto;">
-            <div ref="innerWrapperRef" style="opacity: 0; visibility: hidden;">
-                <div class="view-container">
-                    <router-view v-slot="{ Component }">
-                        <transition 
-                            :css="false" 
-                            mode="out-in" 
-                            @before-leave="onBeforeLeave" 
-                            @leave="onLeave" 
-                            @enter="onEnter"
-                        >
-                            <component :is="Component" :key="route.path" />
-                        </transition>
-                    </router-view>
-                </div>
+        <div class="clipper-box" ref="clipperRef" style="overflow: hidden; position: relative;">
+            <div ref="innerWrapperRef" style="position: relative;">
+                
+                <router-view v-slot="{ Component }">
+                    <transition 
+                        :css="false" 
+                        mode="out-in" 
+                        @leave="onLeave" 
+                        @enter="onEnter"
+                    >
+                        <component :is="Component" :key="route.path" />
+                    </transition>
+                </router-view>
+
             </div>
         </div>
       </div>
@@ -82,15 +58,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, onBeforeUpdate, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'; // Removed unused 'watch'
 import { useRouter, useRoute } from 'vue-router';
 import gsap from 'gsap';
 import { usePixiApp } from '../composables/usePixiApp.js';
 
 const router = useRouter();
 const route = useRoute();
+const { init, destroy } = usePixiApp();
 
-// --- Refs ---
+// Refs
 const pixiContainer = ref(null);
 const sidebarRef = ref(null);
 const menuTriggerRef = ref(null);
@@ -101,219 +78,118 @@ const clipperRef = ref(null);
 const innerWrapperRef = ref(null);
 const loaderTextRef = ref(null);
 
-// --- State ---
+// State
 const isIntroPlaying = ref(true);
 const isSidebarOpen = ref(false);
-const transitionState = ref('idle'); 
+let isThrottled = false; // 用于滚轮节流
 
-let isThrottled = false;
-const navNodeRefs = ref({});
-let resizeObserver = null;
-const transitionType = ref('parent');
+// --- 动画逻辑 ---
 
-// --- Lifecycle Hooks ---
+// 1. 离开动画
+const onLeave = (el, done) => {
+  gsap.to(el, { 
+      opacity: 0, 
+      duration: 0.3, 
+      ease: "power2.in", 
+      onComplete: done 
+  });
+};
 
-onBeforeUpdate(() => {
-  navNodeRefs.value = {};
-});
+// 2. 进入动画
+const onEnter = (el, done) => {
+  gsap.set(el, { opacity: 0 });
 
+  nextTick(() => {
+    document.fonts.ready.then(() => {
+        if (!clipperRef.value || !innerWrapperRef.value) { done(); return; }
+
+        const startHeight = clipperRef.value.offsetHeight;
+        
+        clipperRef.value.style.height = 'auto';
+        const targetHeight = innerWrapperRef.value.offsetHeight;
+        clipperRef.value.style.height = `${startHeight}px`;
+
+        const tl = gsap.timeline({
+            onComplete: () => {
+                if(clipperRef.value) clipperRef.value.style.height = 'auto';
+                done();
+            }
+        });
+
+        tl.to(clipperRef.value, {
+            height: targetHeight,
+            duration: 0.5,
+            ease: "power3.inOut" 
+        });
+
+        tl.to(el, {
+            opacity: 1,
+            duration: 0.4,
+            ease: "power2.out"
+        }, "-=0.2");
+    });
+  });
+};
+
+// --- 生命周期 ---
 onMounted(async () => {
-  if (pixiContainer.value) {
-    await init(pixiContainer.value);
-  }
+  if (pixiContainer.value) await init(pixiContainer.value);
 
-  // --- 1. 初始化隐藏状态 ---
-  const elementsToHide = [
-      sidebarRef.value, 
-      menuTriggerRef.value, 
-      timelineBarRef.value, 
-      cardHeaderRef.value,
-      innerWrapperRef.value 
-  ];
-  gsap.set(elementsToHide, { autoAlpha: 0 });
-  
-  // 初始化卡片样式：直接全宽，但背景和边框透明
-  if (contentCardRef.value) {
-      gsap.set(contentCardRef.value, { 
-          width: '100%', 
-          backgroundColor: 'transparent', 
-          backdropFilter: 'none',
-          borderTopColor: 'rgba(255,255,255,0)',
-          borderBottomColor: 'rgba(255,255,255,0)'
-      });
-  }
-  
-  // 初始 Clipper 高度为 0
-  if(clipperRef.value) {
-      gsap.set(clipperRef.value, { height: 0 });
-  }
+  gsap.set([sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, cardHeaderRef.value], { autoAlpha: 0 });
+  gsap.set(clipperRef.value, { height: 0 });
 
-  // Loader 文字初始可见
-  gsap.set(loaderTextRef.value, { autoAlpha: 1, width: '300px' });
-
-  // --- 2. Intro Animation (开场动画) ---
   const introTl = gsap.timeline({
     onComplete: () => {
       isIntroPlaying.value = false;
-      // 动画结束，清理强制样式
-      if (contentCardRef.value) {
-          gsap.set(contentCardRef.value, { 
-            clearProps: 'backgroundColor,backdropFilter,borderTopColor,borderBottomColor' 
-          });
-      }
-      if (clipperRef.value) {
-           clipperRef.value.style.height = 'auto';
-      }
+      if (clipperRef.value) clipperRef.value.style.height = 'auto';
     }
   });
 
   introTl
-    // Step 1: 文字消失
-    .to(loaderTextRef.value, { autoAlpha: 0, duration: 0.5, delay: 3.5 })
+    .to(loaderTextRef.value, { autoAlpha: 0, duration: 0.5, delay: 1.5 })
+    .add(() => gsap.set(contentCardRef.value, { backgroundColor: 'rgba(10, 10, 10, 0.6)', backdropFilter: 'blur(5px)' }))
+    .to(contentCardRef.value, { borderTopColor: 'var(--border-tech)', borderBottomColor: 'var(--border-tech)', duration: 0.5 }, "<")
+    .to(clipperRef.value, { height: () => innerWrapperRef.value.offsetHeight, duration: 0.8, ease: 'power3.inOut' }, "<")
+    .to(innerWrapperRef.value, { autoAlpha: 1, duration: 0.5 })
+    .to([sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, cardHeaderRef.value], { autoAlpha: 1, duration: 0.5, stagger: 0.1 });
     
-    // Step 2: 卡片显形 (背景+边框) 与 高度展开 同时进行
-    .add(() => {
-        // 瞬间切换背景属性，避免渐变时的闪烁
-        gsap.set(contentCardRef.value, {
-            backgroundColor: 'rgba(10, 10, 10, 0.6)',
-            backdropFilter: 'blur(5px)'
-        });
-    })
-    .to(contentCardRef.value, {
-       borderTopColor: 'var(--border-tech)',
-       borderBottomColor: 'var(--border-tech)',
-       duration: 0.6
-    }, "<") // "<" 符号确保与上一条指令同步开始
-    .to(clipperRef.value, {
-        height: () => innerWrapperRef.value.offsetHeight, 
-        duration: 0.8,
-        ease: 'power3.inOut'
-    }, "<") 
-    
-    // Step 3: 内容淡入 (稍晚于高度展开)
-    .to(innerWrapperRef.value, {
-        autoAlpha: 1,
-        duration: 0.5
-    }, "-=0.6") 
-
-    // Step 4: 周围 UI 浮现
-    .to([sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, cardHeaderRef.value], {
-      autoAlpha: 1,
-      duration: 0.5,
-      stagger: 0.1
-    }, "-=0.3");
-
-  // --- Resize Observer (自适应高度) ---
-  if (innerWrapperRef.value && clipperRef.value) {
-    resizeObserver = new ResizeObserver(entries => {
-      // 仅在非动画状态下响应窗口大小变化
-      if (isIntroPlaying.value || transitionState.value !== 'idle') return;
-      
-      const contentHeight = entries[0].contentRect.height;
-      gsap.to(clipperRef.value, {
-          height: contentHeight,
-          duration: 0.3,
-          ease: 'power2.out'
-      });
-    });
-    resizeObserver.observe(innerWrapperRef.value);
-  }
+  window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
   destroy();
-  if (resizeObserver) resizeObserver.disconnect();
+  window.removeEventListener('resize', handleResize);
 });
 
-// --- Transition Hooks (核心逻辑：无弹簧切换) ---
-
-// 用于记录上一页高度
-let previousHeight = 0;
-
-const onBeforeLeave = () => {
-  transitionState.value = 'leaving';
-  // 1. 锁定当前高度，防止内容消失瞬间父容器塌陷
-  if (clipperRef.value) {
-      previousHeight = clipperRef.value.offsetHeight;
-      clipperRef.value.style.height = previousHeight + 'px';
-  }
-};
-
-const onLeave = (el, done) => {
-  // 2. 仅淡出，不位移，保持布局稳定
-  gsap.to(el, { opacity: 0, duration: 0.2, onComplete: done });
-};
-
-const onEnter = (el, done) => {
-  transitionState.value = 'entering';
-  
-  // 3. 初始化新内容位置 (移除 scale，防止计算误差)
-  if (transitionType.value === 'parent') {
-      gsap.set(el, { opacity: 0, x: 20 });
-  } else {
-      gsap.set(el, { opacity: 0 });
-  }
-
-  nextTick(() => {
-      if (!clipperRef.value || !innerWrapperRef.value) {
-          done();
-          return;
-      }
-
-      // 4. 精确测量：强制设为 auto 测量目标高度
-      // 此时新内容已渲染但透明，能撑开容器
-      const startH = previousHeight;
-      clipperRef.value.style.height = 'auto';
-      const targetH = clipperRef.value.offsetHeight;
-
-      // 5. 立即恢复到起始高度，准备动画
-      clipperRef.value.style.height = startH + 'px';
-
-      const tl = gsap.timeline({
-          onComplete: () => {
-              transitionState.value = 'idle';
-              // 动画结束，释放高度控制
-              if (clipperRef.value) {
-                  clipperRef.value.style.height = 'auto';
-              }
-              done();
-          }
-      });
-
-      // 6. 执行高度平滑过渡 (绝对值控制，无抖动)
-      tl.to(clipperRef.value, { 
-          height: targetH,
-          duration: 0.4, 
-          ease: "power3.inOut" 
-        }, 0);
-
-      // 7. 内容淡入
-      if (transitionType.value === 'parent') {
-          tl.to(el, { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }, "-=0.3");
-      } else {
-          tl.to(el, { opacity: 1, duration: 0.3 }, "-=0.2");
-      }
-  });
-};
-
-// --- Watchers & Interaction ---
-
-watch(route, (to, from) => {
-  const toTop = to.path.split('/')[1];
-  const fromTop = from ? from.path.split('/')[1] : null;
-  transitionType.value = (fromTop && toTop === fromTop) ? 'child' : 'parent';
-
-  const nodeEl = navNodeRefs.value[to.path];
-  if (nodeEl) {
-    const circle = nodeEl.querySelector('.nav-node-circle');
-    if (circle) {
-      gsap.timeline()
-        .to(circle, { scale: 1.5, duration: 0.2, ease: 'power2.out' })
-        .to(circle, { scale: 1, duration: 0.3, ease: 'elastic.out(1, 0.3)' });
+const handleResize = () => {
+    if (!isIntroPlaying.value && clipperRef.value && innerWrapperRef.value) {
+        clipperRef.value.style.height = 'auto';
     }
-  }
-}, { immediate: true });
+}
 
+// --- 导航逻辑 ---
+const currentRoute = computed(() => route.path);
+const rightNavItems = computed(() => {
+    const section = route.path.split('/')[1];
+    if (section === 'intro') return [
+        { to: '/intro/personal', name: '个人', en_name: 'Personal' },
+        { to: '/intro/skills', name: '技能', en_name: 'Skills' },
+        { to: '/intro/ongoing', name: '项目', en_name: 'Ongoing' },
+        { to: '/intro/finished', name: '作品', en_name: 'Finished' },
+        { to: '/intro/links', name: '链接', en_name: 'Links' },
+    ];
+    if (section === 'collab') return [
+        { to: '/collab/music', name: '音乐', en_name: 'Music' },
+        { to: '/collab/dev', name: '开发', en_name: 'Dev' },
+    ];
+    return [];
+});
+
+const toggleSidebar = () => { if (!isIntroPlaying.value) isSidebarOpen.value = !isSidebarOpen.value; };
+const handleStageClick = () => { if (isSidebarOpen.value) isSidebarOpen.value = false; };
+const navigate = (path) => { if (route.path !== path) router.push(path); };
+
+// 滚轮切换逻辑 (恢复了完整逻辑，修复了 unused vars 错误)
 const handleWheel = (event) => {
   if (isSidebarOpen.value || isIntroPlaying.value) return;
   if (isThrottled) return;
@@ -324,37 +200,16 @@ const handleWheel = (event) => {
   if (navItems.length <= 1) return;
   const currentIndex = navItems.findIndex(item => item.to === currentRoute.value);
   if (currentIndex === -1) return;
+  
   const direction = event.deltaY > 0 ? 1 : -1;
   let nextIndex = currentIndex + direction;
+  
   if (nextIndex < 0) nextIndex = 0;
   else if (nextIndex >= navItems.length) nextIndex = navItems.length - 1;
+  
   if (nextIndex !== currentIndex) navigate(navItems[nextIndex].to);
 };
 
-const rightNavItems = computed(() => {
-  const currentTopLevelRoute = route.path.split('/')[1];
-  switch (currentTopLevelRoute) {
-    case 'intro': return [
-        { to: '/intro/personal', name: '个人', en_name: 'Personal' },
-        { to: '/intro/skills', name: '技能', en_name: 'Skills' },
-        { to: '/intro/ongoing', name: '项目', en_name: 'Ongoing' },
-        { to: '/intro/finished', name: '作品', en_name: 'Finished' },
-        { to: '/intro/links', name: '链接', en_name: 'Links' },
-      ];
-    case 'collab': return [
-        { to: '/collab/music', name: '音乐', en_name: 'Music' },
-        { to: '/collab/dev', name: '开发', en_name: 'Dev' },
-      ];
-    case 'contact': return [ { to: '/contact', name: '联系', en_name: 'Contact' }, ];
-    default: return [];
-  }
-});
-
-const currentRoute = computed(() => route.path);
-const toggleSidebar = () => { if (!isIntroPlaying.value) isSidebarOpen.value = !isSidebarOpen.value; };
-const handleStageClick = () => { if (isSidebarOpen.value) isSidebarOpen.value = false; };
-const navigate = (path) => { if (route.path !== path) router.push(path); };
-const { init, destroy } = usePixiApp();
 </script>
 
 <style>
@@ -666,14 +521,14 @@ body {
   position: relative;
   z-index: 10;
   transition: border-color 0.3s;
-  overflow: visible; /* 允许角落装饰超出 */
+  overflow: visible;
 }
 
 .content-card:hover {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Clipper 容器：这是防止弹簧效果的关键 */
+/* Clipper 容器：动画核心 */
 .clipper-box {
     overflow: hidden;
     height: auto;
@@ -758,12 +613,6 @@ body {
   margin: 0 0 1rem 0;
   line-height: 0.9;
   color: #fff;
-}
-
-.view-container {
-  min-height: 60px;
-  color: #888;
-  line-height: 1.6;
 }
 
 /* 底部栏 */

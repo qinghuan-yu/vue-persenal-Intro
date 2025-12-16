@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+// 保持你原有的组件引入...
 import MainLayout from '../layouts/MainLayout.vue';
 import IntroIndex from '../views/Intro/Index.vue';
 import Personal from '../views/Intro/Personal.vue';
@@ -14,13 +15,13 @@ import Contact from '../views/Contact/Index.vue';
 const routes = [
   {
     path: '/',
-    redirect: '/intro',
     component: MainLayout,
+    redirect: '/intro/personal', // 根路径重定向
     children: [
       {
         path: 'intro',
         component: IntroIndex,
-        redirect: '/intro/personal',
+        redirect: '/intro/personal', // 父级路径重定向
         children: [
           { path: 'personal', component: Personal },
           { path: 'skills', component: Skills },
@@ -44,6 +45,11 @@ const routes = [
       },
     ],
   },
+  // 🛡️ 捕获所有未知路径，重回起点
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/intro/personal'
+  }
 ];
 
 const router = createRouter({
