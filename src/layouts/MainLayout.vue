@@ -2,7 +2,7 @@
   <div id="app-layout" @wheel.prevent="handleWheel">
     <div ref="pixiContainer" id="pixi-container"></div>
 
-    <div :class="['sidebar', { open: isSidebarOpen }]">
+    <div :class="['sidebar', { open: isSidebarOpen }]" ref="sidebarRef">
       <div class="sidebar-line"></div>
       
       <router-link to="/intro" class="sidebar-item">
@@ -16,13 +16,17 @@
       </router-link>
     </div>
 
-    <div class="menu-trigger" @click="toggleSidebar">
+    <div class="menu-trigger" @click="toggleSidebar" ref="menuTriggerRef">
       MENU
     </div>
 
     <section id="main-stage" @click="handleStageClick">
+      <div v-if="isIntroPlaying" ref="loaderTextRef" class="loader-container">
+        <div class="loader-text-zh">神经元正在连接</div>
+        <div class="loader-text-en">NEURAL CONNECTION ESTABLISHING</div>
+      </div>
       
-      <div class="timeline-bar">
+      <div class="timeline-bar" ref="timelineBarRef">
         <div class="timeline-line"></div>
         
         <div 
@@ -85,81 +89,221 @@ import { usePixiApp } from '../composables/usePixiApp.js';
 const router = useRouter();
 const route = useRoute();
 
+// --- Refs for Animation ---
+const pixiContainer = ref(null);
+const sidebarRef = ref(null);
+const menuTriggerRef = ref(null);
+const timelineBarRef = ref(null);
 const contentCardRef = ref(null);
 const innerWrapperRef = ref(null);
+const loaderTextRef = ref(null);
+
+
+// --- State ---
+const isIntroPlaying = ref(true);
+const isSidebarOpen = ref(false);
+let isThrottled = false;
+const navNodeRefs = ref({});
 let resizeObserver = null;
+const transitionType = ref('parent');
+
 
 // --- Animations ---
-const transitionType = ref('parent');
 
 const onLeave = (el, done) => {
   if (transitionType.value === 'parent') {
-    // Parent (glitch) animation
     const tl = gsap.timeline({ onComplete: done });
-    tl.to(el, {
-      skewX: 20,
-      duration: 0.1,
-      ease: 'power2.in',
-    });
-    tl.to(el, {
-      opacity: 0,
-      filter: 'blur(5px)',
-      x: -50,
-      duration: 0.3,
-      ease: 'power2.in',
-    }, '>-0.05');
+    tl.to(el, { skewX: 20, duration: 0.1, ease: 'power2.in' });
+    tl.to(el, { opacity: 0, filter: 'blur(5px)', x: -50, duration: 0.3, ease: 'power2.in' }, '>-0.05');
   } else {
-    // Child (fast fade) animation
     gsap.to(el, { opacity: 0, duration: 0.15, onComplete: done });
   }
 };
 
 const onEnter = (el, done) => {
   if (transitionType.value === 'parent') {
-    // Parent (unlock) animation
-    gsap.fromTo(el, 
-      { opacity: 0, scale: 0.95, x: 50 },
-      {
-        opacity: 1,
-        scale: 1,
-        x: 0,
-        duration: 0.5,
-        ease: 'power2.out',
-        onComplete: done
-      }
-    );
+    gsap.fromTo(el, { opacity: 0, scale: 0.95, x: 50 }, { opacity: 1, scale: 1, x: 0, duration: 0.5, ease: 'power2.out', onComplete: done });
   } else {
-    // Child (fast fade) animation
-    gsap.fromTo(el, 
-      { opacity: 0 }, 
-      {
-        opacity: 1,
-        duration: 0.15,
-        onComplete: done
-      }
-    );
+    gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.15, onComplete: done });
   }
 };
 
-
-// --- State & Data ---
-const isSidebarOpen = ref(false);
-let isThrottled = false;
-const navNodeRefs = ref({});
+// --- Lifecycle Hooks ---
 
 onBeforeUpdate(() => {
   navNodeRefs.value = {};
 });
 
+onMounted(async () => {
+  // --- PIXI Init ---
+  if (pixiContainer.value) {
+    await init(pixiContainer.value);
+  }
+
+  // --- 1. 预先测量 (Pre-calculation) ---
+  const elementsToHide = [sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, innerWrapperRef.value];
+  
+  // 【关键】确保 JS 测量时的盒模型与 CSS 一致 (border-box)
+  // 这防止了 padding 被计算两次导致的"路由切换变高"问题
+  if (contentCardRef.value) {
+      contentCardRef.value.style.boxSizing = 'border-box';
+  }
+
+  // 获取 CSS 计算出的 Padding 值
+  const computedStyle = window.getComputedStyle(contentCardRef.value);
+  const targetPaddingTop = computedStyle.paddingTop;
+  const targetPaddingBottom = computedStyle.paddingBottom;
+  
+  // 测量最终状态的尺寸 (此时内容都在 DOM 里，是自然撑开的)
+  const finalCardRect = contentCardRef.value.getBoundingClientRect();
+  const fixedWidth = finalCardRect.width; 
+  // 因为是 border-box，这个 offsetHeight 已经包含了 Padding，是最终需要的总高度
+  const targetHeight = contentCardRef.value.offsetHeight; 
+
+  // --- 2. 设置初始状态 (Set Initial State) ---
+  
+  gsap.set(elementsToHide, { autoAlpha: 0 });
+  
+  gsap.set(contentCardRef.value, {
+    width: fixedWidth + 'px',
+    height: '2px', // 起始高度
+    paddingTop: '0px',
+    paddingBottom: '0px',
+    scaleX: 0.7,
+    borderTop: 'none',
+    borderBottom: 'none',
+    backgroundColor: 'var(--color-text-main)',
+    backdropFilter: 'none',
+    overflow: 'hidden' 
+  });
+  
+  gsap.set(loaderTextRef.value, { width: fixedWidth + 'px'});
+
+  // --- 3. 定义动画 (Animation) ---
+
+  const introTl = gsap.timeline({
+    onComplete: () => {
+      // 【关键修复】安全检查：防止组件卸载后回调仍在执行导致的报错
+      if (!contentCardRef.value) return;
+
+      isIntroPlaying.value = false;
+      
+      // 动画结束，释放控制权
+      // 此时 targetHeight (动画终点) 和 auto (自然高度) 在像素上是完全相等的
+      contentCardRef.value.style.height = 'auto';
+      contentCardRef.value.style.width = '100%'; // 恢复响应式宽度
+      
+      // 清除 GSAP 遗留样式
+      gsap.set(contentCardRef.value, { 
+        clearProps: 'transform,scaleX,backgroundColor,backdropFilter,borderTop,borderBottom' 
+      });
+    }
+  });
+
+  introTl
+    .to(loaderTextRef.value, { autoAlpha: 0, duration: 0.5, delay: 5 })
+    .to(contentCardRef.value, {
+      height: targetHeight, // 动画目标是"含Padding的总高度"
+      paddingTop: targetPaddingTop, // 恢复 Padding
+      paddingBottom: targetPaddingBottom,
+      scaleX: 1,
+      backgroundColor: 'rgba(10, 10, 10, 0.6)',
+      backdropFilter: 'blur(5px)',
+      duration: 0.8,
+      ease: 'power3.inOut' 
+    }, '<')
+    .to(contentCardRef.value, {
+       borderTop: '1px solid var(--border-tech)',
+       borderBottom: '1px solid var(--border-tech)',
+       duration: 0.4
+    }, ">-0.4")
+    .to(elementsToHide, {
+      autoAlpha: 1,
+      duration: 0.6,
+      stagger: 0.1,
+      ease: 'power2.out'
+    }, ">-0.5");
+
+  // --- 4. 路由切换/内容变化的高度监听 (Height Observer) ---
+  if (innerWrapperRef.value && contentCardRef.value) {
+    resizeObserver = new ResizeObserver(entries => {
+      // 动画播放时禁止干涉，或者组件已销毁则退出
+      if (isIntroPlaying.value || !contentCardRef.value) return;
+      
+      for (let entry of entries) {
+        // 1. 获取内部内容的高度 (innerWrapper)
+        const contentRectHeight = entry.contentRect.height;
+        
+        // 2. 获取当前的 padding 和 border
+        const style = window.getComputedStyle(contentCardRef.value);
+        const pad = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+        const border = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+        
+        // 3. 计算需要的总高度 (border-box 模式下：高度 = 内容 + Padding + Border)
+        const neededHeight = contentRectHeight + pad + border;
+        
+        // 4. 获取当前实际高度
+        const currentHeight = contentCardRef.value.offsetHeight;
+
+        // 5. 只有当差异大于 1px 时才执行动画 (防抖动)
+        if (Math.abs(currentHeight - neededHeight) > 1) {
+            gsap.to(contentCardRef.value, { 
+              height: neededHeight, 
+              duration: 0.4, 
+              ease: 'power3.out',
+              // 动画结束后设为 auto，这对响应式布局至关重要
+              onComplete: () => {
+                 if (contentCardRef.value) {
+                    contentCardRef.value.style.height = 'auto';
+                 }
+              }
+            });
+        }
+      }
+    });
+    resizeObserver.observe(innerWrapperRef.value);
+  }
+});
+
+onUnmounted(() => {
+  destroy();
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+  }
+});
+
+// --- Watchers ---
+
+watch(route, (to, from) => {
+  const toTop = to.path.split('/')[1];
+  const fromTop = from ? from.path.split('/')[1] : null;
+  
+  if (fromTop && toTop === fromTop) {
+    transitionType.value = 'child';
+  } else {
+    transitionType.value = 'parent';
+  }
+
+  const nodeEl = navNodeRefs.value[to.path];
+  if (nodeEl) {
+    const circle = nodeEl.querySelector('.nav-node-circle');
+    if (circle) {
+      gsap.timeline()
+        .to(circle, { scale: 1.5, duration: 0.2, ease: 'power2.out' })
+        .to(circle, { scale: 1, duration: 0.3, ease: 'elastic.out(1, 0.3)' });
+    }
+  }
+}, { immediate: true });
+
+
+// --- Interactions ---
 
 const handleWheel = (event) => {
-  if (isSidebarOpen.value) return;
+  if (isSidebarOpen.value || isIntroPlaying.value) return;
   if (isThrottled) return;
   isThrottled = true;
 
-  setTimeout(() => {
-    isThrottled = false;
-  }, 500); // 500ms throttle period
+  setTimeout(() => { isThrottled = false; }, 500);
 
   const navItems = rightNavItems.value;
   if (navItems.length <= 1) return;
@@ -170,17 +314,11 @@ const handleWheel = (event) => {
   const direction = event.deltaY > 0 ? 1 : -1;
   let nextIndex = currentIndex + direction;
 
-  if (nextIndex < 0) {
-    nextIndex = 0;
-  } else if (nextIndex >= navItems.length) {
-    nextIndex = navItems.length - 1;
-  }
+  if (nextIndex < 0) nextIndex = 0;
+  else if (nextIndex >= navItems.length) nextIndex = navItems.length - 1;
 
-  if (nextIndex !== currentIndex) {
-    navigate(navItems[nextIndex].to);
-  }
+  if (nextIndex !== currentIndex) navigate(navItems[nextIndex].to);
 };
-
 
 const rightNavItems = computed(() => {
   const currentTopLevelRoute = route.path.split('/')[1];
@@ -199,91 +337,59 @@ const rightNavItems = computed(() => {
         { to: '/collab/dev', name: '开发', en_name: 'Dev' },
       ];
     case 'contact':
-       return [
-        { to: '/contact', name: '联系', en_name: 'Contact' },
-      ];
-    default:
-      return [];
+       return [ { to: '/contact', name: '联系', en_name: 'Contact' }, ];
+    default: return [];
   }
 });
 
 const currentRoute = computed(() => route.path);
 
-// --- Sidebar Ping & Transition Logic ---
-watch(route, (to, from) => {
-  // Determine transition type
-  const toTop = to.path.split('/')[1];
-  const fromTop = from ? from.path.split('/')[1] : null;
-  
-  if (fromTop && toTop === fromTop) {
-    transitionType.value = 'child';
-  } else {
-    transitionType.value = 'parent';
-  }
+const toggleSidebar = () => { if (!isIntroPlaying.value) isSidebarOpen.value = !isSidebarOpen.value; };
+const handleStageClick = () => { if (isSidebarOpen.value) isSidebarOpen.value = false; };
+const navigate = (path) => { if (route.path !== path) router.push(path); };
 
-  // Sidebar ping animation
-  const nodeEl = navNodeRefs.value[to.path];
-  if (nodeEl) {
-    const circle = nodeEl.querySelector('.nav-node-circle');
-    if (circle) {
-      gsap.timeline()
-        .to(circle, { scale: 1.5, duration: 0.2, ease: 'power2.out' })
-        .to(circle, { scale: 1, duration: 0.3, ease: 'elastic.out(1, 0.3)' });
-    }
-  }
-}, { immediate: true });
-
-// --- Interactions ---
-const toggleSidebar = () => {
-  isSidebarOpen.value = !isSidebarOpen.value;
-};
-
-const handleStageClick = () => {
-  if (isSidebarOpen.value) {
-    isSidebarOpen.value = false;
-  }
-};
-
-const navigate = (path) => {
-  if (route.path !== path) {
-    router.push(path);
-  }
-};
 
 // --- PixiJS Integration ---
-const pixiContainer = ref(null);
 const { init, destroy } = usePixiApp();
-
-onMounted(async () => {
-  if (pixiContainer.value) {
-    await init(pixiContainer.value);
-  }
-
-  // Height animation logic
-  if (innerWrapperRef.value && contentCardRef.value) {
-    resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        const newHeight = entry.target.offsetHeight;
-        gsap.to(contentCardRef.value, { 
-          height: newHeight, 
-          duration: 0.4, 
-          ease: 'power3.out' 
-        });
-      }
-    });
-    resizeObserver.observe(innerWrapperRef.value);
-  }
-});
-
-onUnmounted(() => {
-  destroy();
-  if (resizeObserver) {
-    resizeObserver.disconnect();
-  }
-});
 </script>
 
 <style>
+/* ... (existing styles) ... */
+.loader-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+  /* Width is set by GSAP */
+  text-align: center;
+}
+
+.loader-text-zh {
+  color: var(--color-text-main);
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  padding-left: 0.2em; /* Optical alignment */
+  position: absolute;
+  top: -24px;
+  background-color: var(--color-bg);
+  padding: 0 12px;
+}
+
+.loader-text-en {
+  color: var(--color-text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  padding-left: 0.3em; /* Optical alignment */
+  position: absolute;
+  top: 5px;
+}
+
 /* --- 全局样式设定 (移植自目标代码) --- */
 :root {
   --color-bg: #050505;
@@ -404,10 +510,20 @@ body {
 .nav-node.active .nav-label { opacity: 1; transform: translateX(0); }
 
 /* --- 中央内容卡片 --- */
+/* MainLayout.vue 的 <style> 部分 */
+
 .content-card {
-  background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(5px);
-  border: 1px solid var(--border-tech); padding: 3rem; max-width: 600px; width: 100%;
-  position: relative; z-index: 10; transition: border-color 0.3s;
+  box-sizing: border-box; /* 【核心修复】这一行能解决路由切换后变高的问题 */
+  background: rgba(10, 10, 10, 0.6); 
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--border-tech); 
+  padding: 3rem; 
+  max-width: 600px; 
+  width: 100%;
+  position: relative; 
+  z-index: 10; 
+  transition: border-color 0.3s;
+  /* overflow: hidden;  <-- 建议去掉或在JS中控制，否则有时会切断阴影 */
 }
 .content-card:hover { border-color: rgba(255, 255, 255, 0.3); }
 
