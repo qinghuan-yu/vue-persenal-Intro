@@ -122,8 +122,22 @@ const scrambleDirective = {
             // 显示元素
             el.style.opacity = '1';
             
+            console.log('🎬 [vScramble] 开始解码动画', {
+              element: el,
+              currentHeight: el.style.height,
+              offsetHeight: el.offsetHeight
+            });
+            
             // 开始解码动画
             scrambler.setText(originalText).then(() => {
+              console.log('✅ [vScramble] 解码动画完成', {
+                element: el,
+                text: el.textContent,
+                height: el.style.height,
+                offsetHeight: el.offsetHeight,
+                scrollHeight: el.scrollHeight
+              });
+              
               // 动画完成，移除 overflow 限制
               el.style.overflow = '';
             });

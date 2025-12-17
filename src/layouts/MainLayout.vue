@@ -123,10 +123,30 @@ const onEnter = (el, done) => {
           
           // 执行平滑过渡动画
           const tl = gsap.timeline({
-            onComplete: () => {
-              if (clipperRef.value) {
-                clipperRef.value.style.height = 'auto';
+            onStart: () => {
+              console.log('🚀 [GSAP] 动画开始', {
+                startHeight: clipperRef.value.offsetHeight,
+                targetHeight
+              });
+            },
+            onUpdate: () => {
+              // 每帧输出当前高度
+              if (Math.random() < 0.1) { // 10%概率输出，避免过多日志
+                console.log('📊 [GSAP] 动画进度', {
+                  currentHeight: clipperRef.value.offsetHeight,
+                  innerHeight: innerWrapperRef.value.offsetHeight
+                });
               }
+            },
+            onComplete: () => {
+              console.log('✅ [GSAP] 动画完成', {
+                finalHeight: clipperRef.value.offsetHeight,
+                innerHeight: innerWrapperRef.value.offsetHeight,
+                innerScrollHeight: innerWrapperRef.value.scrollHeight
+              });
+              
+              // 不设置auto，保持固定高度，避免突变
+              // 高度会在窗口resize时自动调整
               done();
             }
           });
@@ -160,20 +180,23 @@ onMounted(async () => {
   const introTl = gsap.timeline({
     onComplete: () => {
       isIntroPlaying.value = false;
-      if (clipperRef.value) clipperRef.value.style.height = 'auto';
+      // 不设置auto，保持固定高度，避免突变
     }
   });
   introTl
     .to(loaderTextRef.value, { autoAlpha: 0, duration: 0.5, delay: 1.5 })
     .add(() => gsap.set(contentCardRef.value, { backgroundColor: 'rgba(10, 10, 10, 0.6)', backdropFilter: 'blur(5px)' }))
     .to(contentCardRef.value, { borderTopColor: 'var(--border-tech)', borderBottomColor: 'var(--border-tech)', duration: 0.5 }, "<")
-    .to(clipperRef.value, { height: () => innerWrapperRef.value.offsetHeight, duration: 0.8, ease: 'power3.inOut' }, "<")
+    .to(clipperRef.value, { height: () => innerWrapperRef.value.scrollHeight, duration: 0.8, ease: 'power3.inOut' }, "<")
     .to(innerWrapperRef.value, { autoAlpha: 1, duration: 0.5 })
     .to([sidebarRef.value, menuTriggerRef.value, timelineBarRef.value, cardHeaderRef.value], { autoAlpha: 1, duration: 0.5, stagger: 0.1 });
   window.addEventListener('resize', handleResize);
 });
 watch(route, (newRoute) => {
   if (!morphToShapes) return;
+  // 确保路由对象已就绪
+  if (!newRoute || !newRoute.path) return;
+  
   // Contact 页面：显示两个二维码粒子（左右两侧）+ 底部邮箱文字
   if (newRoute.path.includes('/contact')) {
     const shapes = [
