@@ -919,22 +919,17 @@ body {
 .glitch-title::before {
   color: #ff00ff;
   z-index: -1;
-  animation: glitch-1 0s linear infinite;
+  /* 常驻故障动画（一直播放） */
+  animation: glitch-1 1.2s linear infinite;
 }
 
 .glitch-title::after {
   color: #00ffff;
   z-index: -2;
-  animation: glitch-2 0s linear infinite;
+  /* 常驻故障动画（一直播放） */
+  animation: glitch-2 1.5s linear infinite;
 }
-
-.glitch-title:hover::before {
-  animation: glitch-1 0.3s linear infinite;
-}
-
-.glitch-title:hover::after {
-  animation: glitch-2 0.3s linear infinite;
-}
+/* 移除 hover 触发逻辑：故障效果常驻 */
 
 .glitch-accent {
   color: var(--color-accent);
@@ -957,22 +952,17 @@ body {
 .glitch-accent::before {
   color: #ff00ff;
   z-index: -1;
-  animation: glitch-1 0s linear infinite;
+  /* 常驻故障动画 */
+  animation: glitch-1 1.2s linear infinite;
 }
 
 .glitch-accent::after {
   color: #00ffff;
   z-index: -2;
-  animation: glitch-2 0s linear infinite;
+  /* 常驻故障动画 */
+  animation: glitch-2 1.5s linear infinite;
 }
-
-.glitch-title:hover .glitch-accent::before {
-  animation: glitch-1 0.3s linear infinite;
-}
-
-.glitch-title:hover .glitch-accent::after {
-  animation: glitch-2 0.3s linear infinite;
-}
+/* 移除 hover 触发逻辑：故障效果常驻 */
 
 @keyframes glitch-1 {
   0% {

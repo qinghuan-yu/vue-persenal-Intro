@@ -58,6 +58,7 @@ const MORPH_CONFIG = {
 const COLOR_ACCENT = 0x61b1d6; // 默认科技蓝
 const COLOR_DARK_1 = 0x333333;
 const COLOR_DARK_2 = 0x555555;
+const COLOR_WARNING = 0xF4D03F; // 源石黄
 
 // 工具：洗牌算法
 function shuffleArray(array) {
@@ -87,17 +88,23 @@ class Particle {
         this.baseVx = (Math.random() - 0.5) * 0.6;
         this.baseVy = (Math.random() - 0.5) * 0.6;
 
-        // 随机分配基础颜色 (背景深色粒子)
+        // 随机分配基础颜色：约 50% 源石黄，其余保留原有蓝/深色分布
         const rand = Math.random();
-        if (rand > 0.9) {
-            this.baseColor = COLOR_ACCENT;
+        if (rand < 0.5) {
+            this.baseColor = COLOR_WARNING;
             this.maxAlpha = 0.9;
-        } else if (rand > 0.6) {
-            this.baseColor = COLOR_DARK_1;
-            this.maxAlpha = 0.5;
         } else {
-            this.baseColor = COLOR_DARK_2;
-            this.maxAlpha = 0.4;
+            const sub = Math.random();
+            if (sub > 0.8) {
+                this.baseColor = COLOR_ACCENT;
+                this.maxAlpha = 0.9;
+            } else if (sub > 0.4) {
+                this.baseColor = COLOR_DARK_1;
+                this.maxAlpha = 0.5;
+            } else {
+                this.baseColor = COLOR_DARK_2;
+                this.maxAlpha = 0.4;
+            }
         }
 
         this.currentColor = this.baseColor;
