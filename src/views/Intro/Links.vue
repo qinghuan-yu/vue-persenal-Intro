@@ -4,7 +4,6 @@
     <div class="module-header">
       <div class="header-group">
         <span class="module-tag">EXTERNAL LINKS</span>
-        <span class="module-subtitle">Collection of projects and profiles</span>
       </div>
       <span class="module-code">LINK_SYS_v1.5</span>
     </div>
@@ -23,10 +22,6 @@
           <a :href="repo.url" target="_blank" rel="noopener noreferrer" class="link-main" v-scramble>
             {{ repo.name }}
           </a>
-        </div>
-        <div class="link-url">
-          <span class="url-label">URL:</span>
-          <span class="url-text">{{ getDomain(repo.url) }}</span>
         </div>
       </div>
     </div>

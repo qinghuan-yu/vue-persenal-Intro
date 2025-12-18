@@ -47,13 +47,13 @@
       <div class="terminal-body">
         <div class="terminal-line">
           <span class="prompt">$</span>
-          <span class="command">git status</span>
+          <span class="command" v-scramble>git status</span>
         </div>
         <div class="terminal-line output">
-          <span class="output-text">On branch main</span>
+          <span class="output-text" v-scramble>On branch main</span>
         </div>
         <div class="terminal-line output">
-          <span class="output-text">Working directory: embedded-projects</span>
+          <span class="output-text" v-scramble>Working directory: embedded-projects</span>
         </div>
         <div class="terminal-line">
           <span class="prompt">$</span>

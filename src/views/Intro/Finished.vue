@@ -19,10 +19,6 @@
             This Vue Project
           </a>
         </div>
-        <div class="archive-meta">
-          <span class="meta-chip">TYPE: WEB</span>
-          <span class="meta-chip">PLATFORM: GITHUB</span>
-        </div>
       </div>
       
       <div class="archive-card">
@@ -35,10 +31,6 @@
           <a href="https://music.163.com/song?id=2758145032&uct2=U2FsdGVkX1+OhAUdieOlKJSEMOkMOSabaOpgnpVUVko=" target="_blank" rel="noopener noreferrer" v-scramble>
             からっぽの星で
           </a>
-        </div>
-        <div class="archive-meta">
-          <span class="meta-chip">TYPE: MUSIC</span>
-          <span class="meta-chip">PLATFORM: 网易云</span>
         </div>
       </div>
     </div>

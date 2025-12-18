@@ -3,13 +3,35 @@
     <div ref="pixiContainer" id="pixi-container"></div>
     <div :class="['sidebar', { open: isSidebarOpen }]" ref="sidebarRef" style="opacity: 0; visibility: hidden;">
       <div class="sidebar-line"></div>
-      <router-link to="/intro" class="sidebar-item"><span>介绍</span><span class="sidebar-sub">INTRO</span></router-link>
-      <router-link to="/collab" class="sidebar-item"><span>合作</span><span
+      <router-link to="/intro" class="sidebar-item" @click="closeSidebar"><span>介绍</span><span class="sidebar-sub">INTRO</span></router-link>
+      <router-link to="/collab" class="sidebar-item" @click="closeSidebar"><span>合作</span><span
           class="sidebar-sub">COLLAB</span></router-link>
-      <router-link to="/contact" class="sidebar-item"><span>联系方式</span><span
+      <router-link to="/contact" class="sidebar-item" @click="closeSidebar"><span>联系方式</span><span
           class="sidebar-sub">CONTACT</span></router-link>
     </div>
-    <div class="menu-trigger" @click="toggleSidebar" ref="menuTriggerRef" style="opacity: 0; visibility: hidden;">MENU
+    <div class="menu-trigger" @click="toggleSidebar" ref="menuTriggerRef" style="opacity: 0; visibility: hidden;">
+      <svg class="menu-icon" width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <!-- 切角外框 -->
+        <path class="menu-frame" d="M 8,0 L 52,0 L 60,8 L 60,52 L 52,60 L 8,60 L 0,52 L 0,8 Z" 
+          fill="rgba(10, 10, 10, 0.8)" 
+          stroke="rgba(97, 177, 214, 0.6)" 
+          stroke-width="1.5"/>
+        
+        <!-- 装饰性角标 -->
+        <rect x="50" y="4" width="6" height="2" fill="#F4D03F" opacity="0.9"/>
+        <rect x="4" y="54" width="4" height="2" fill="#F4D03F" opacity="0.8"/>
+        
+        <!-- 汉堡菜单线条 -->
+        <g class="menu-lines">
+          <line x1="18" y1="24" x2="42" y2="24" stroke="#61b1d6" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="30" x2="42" y2="30" stroke="#61b1d6" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18" y1="36" x2="42" y2="36" stroke="#61b1d6" stroke-width="2" stroke-linecap="round"/>
+        </g>
+        
+        <!-- 装饰性扫描线 -->
+        <line class="scan-line" x1="0" y1="30" x2="60" y2="30" stroke="rgba(244, 208, 63, 0.4)" stroke-width="1"/>
+      </svg>
+      <span class="menu-label">MENU</span>
     </div>
     
     <!-- 装饰性SVG元素 -->
@@ -39,20 +61,24 @@
       </div>
       <div class="timeline-bar" ref="timelineBarRef" style="opacity: 0; visibility: hidden;">
         <div class="timeline-line"></div>
-        <div v-for="(item, index) in rightNavItems" :key="index"
-          :class="['nav-node', { active: currentRoute === item.to }]" @click="navigate(item.to)">
-          <div class="nav-label"><span class="zh">{{ item.name }}</span><span class="en">{{ item.en_name }}</span></div>
-          <svg class="nav-node-svg" width="16" height="16" viewBox="0 0 16 16">
-            <polygon class="nav-polygon" points="8,2 14,6 12,14 4,14 2,6" 
-              fill="rgba(10, 10, 10, 0.8)" 
-              stroke="rgba(255, 255, 255, 0.3)" 
-              stroke-width="1"/>
-            <polygon class="nav-polygon-glow" points="8,2 14,6 12,14 4,14 2,6" 
-              fill="none" 
-              stroke="rgba(97, 177, 214, 0)" 
-              stroke-width="2"/>
-          </svg>
-        </div>
+        <transition-group name="nav-node-transition" tag="div" class="nav-nodes-container">
+          <div v-for="(item, index) in rightNavItems" :key="item.to"
+            :class="['nav-node', { active: currentRoute === item.to }]" 
+            @click="navigate(item.to)"
+            :style="{ '--node-index': index }">
+            <div class="nav-label"><span class="zh">{{ item.name }}</span><span class="en">{{ item.en_name }}</span></div>
+            <svg class="nav-node-svg" width="16" height="16" viewBox="0 0 16 16">
+              <polygon class="nav-polygon" points="8,2 14,6 12,14 4,14 2,6" 
+                fill="rgba(10, 10, 10, 0.8)" 
+                stroke="rgba(255, 255, 255, 0.3)" 
+                stroke-width="1"/>
+              <polygon class="nav-polygon-glow" points="8,2 14,6 12,14 4,14 2,6" 
+                fill="none" 
+                stroke="rgba(97, 177, 214, 0)" 
+                stroke-width="2"/>
+            </svg>
+          </div>
+        </transition-group>
       </div>
       <div class="content-card" ref="contentCardRef">
         <div class="corner tl"></div>
@@ -226,10 +252,19 @@ onMounted(async () => {
   window.addEventListener('resize', handleResize);
   window.addEventListener('mousemove', handleMouseMove);
 });
-watch(route, (newRoute) => {
+watch(route, (newRoute, oldRoute) => {
   if (!morphToShapes) return;
   // 确保路由对象已就绪
   if (!newRoute || !newRoute.path) return;
+  
+  // 检测父路由切换（如从 /intro 切换到 /collab），自动关闭侧边栏
+  if (oldRoute && oldRoute.path) {
+    const oldSection = oldRoute.path.split('/')[1];
+    const newSection = newRoute.path.split('/')[1];
+    if (oldSection !== newSection && isSidebarOpen.value) {
+      isSidebarOpen.value = false;
+    }
+  }
   
   // Contact 页面：显示两个二维码粒子（左右两侧）+ 底部邮箱文字
   if (newRoute.path.includes('/contact')) {
@@ -311,6 +346,7 @@ const rightNavItems = computed(() => {
   return [];
 });
 const toggleSidebar = () => { if (!isIntroPlaying.value) isSidebarOpen.value = !isSidebarOpen.value; };
+const closeSidebar = () => { isSidebarOpen.value = false; };
 const handleStageClick = () => { if (isSidebarOpen.value) isSidebarOpen.value = false; };
 const navigate = (path) => { if (route.path !== path) router.push(path); };
 // 滚轮切换逻辑 (恢复了完整逻辑，修复了 unused vars 错误)
@@ -481,40 +517,85 @@ body {
   font-family: monospace;
   opacity: 0.3;
 }
-/* 菜单触发器 */
+/* 菜单触发器 - SVG图标版本 */
 .menu-trigger {
   position: fixed;
   top: 40px;
   left: 40px;
   z-index: 100;
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  font-size: 1.4rem;
   cursor: pointer;
-  color: var(--color-text-main);
   transition: all 0.3s ease;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  opacity: 0.8;
+  gap: 8px;
+  opacity: 0.85;
 }
-.menu-trigger::before {
-  content: '';
-  display: block;
-  width: 7px;
-  height: 7px;
-  background: #fff;
-  border-radius: 50%;
-  transition: all 0.3s;
-}
+
 .menu-trigger:hover {
   opacity: 1;
-  color: var(--color-accent);
+  transform: translateY(-2px);
 }
-.menu-trigger:hover::before {
-  background: var(--color-accent);
-  box-shadow: 0 0 10px var(--color-accent);
+
+.menu-icon {
+  display: block;
+  transition: all 0.3s ease;
+}
+
+/* SVG 元素动画 */
+.menu-frame {
+  transition: all 0.3s ease;
+}
+
+.menu-trigger:hover .menu-frame {
+  stroke: rgba(244, 208, 63, 0.9);
+  fill: rgba(10, 10, 10, 0.95);
+  filter: drop-shadow(0 0 8px rgba(244, 208, 63, 0.4));
+}
+
+.menu-lines line {
+  transition: all 0.3s ease;
+}
+
+.menu-trigger:hover .menu-lines line {
+  stroke: #F4D03F;
+}
+
+.menu-trigger:hover .menu-lines line:nth-child(1) {
+  transform: translateX(3px);
+}
+
+.menu-trigger:hover .menu-lines line:nth-child(3) {
+  transform: translateX(-3px);
+}
+
+.scan-line {
+  animation: scan-move 2s linear infinite;
+  opacity: 0;
+}
+
+.menu-trigger:hover .scan-line {
+  opacity: 1;
+}
+
+@keyframes scan-move {
+  0% { transform: translateY(-15px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(15px); opacity: 0; }
+}
+
+.menu-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.menu-trigger:hover .menu-label {
+  color: #F4D03F;
+  text-shadow: 0 0 8px rgba(244, 208, 63, 0.5);
 }
 /* 主舞台 */
 #main-stage {
@@ -537,6 +618,27 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 20;
+}
+
+/* 导航节点过渡动画 */
+.nav-node-transition-enter-active,
+.nav-node-transition-leave-active {
+  transition: all 0.5s ease;
+  transition-delay: calc(var(--node-index) * 0.05s);
+}
+
+.nav-node-transition-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.nav-node-transition-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.nav-node-transition-move {
+  transition: transform 0.5s ease;
 }
 .timeline-line {
   width: 1px;
@@ -623,15 +725,17 @@ body {
   transform: translateX(20px);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .nav-label .zh {
-  display: block;
   font-size: 1.1rem;
   color: #fff;
   font-weight: 500;
 }
 .nav-label .en {
-  display: block;
   font-size: 0.6rem;
   color: var(--color-accent);
   letter-spacing: 0.1em;

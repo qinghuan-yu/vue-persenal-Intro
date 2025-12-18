@@ -14,13 +14,6 @@
           <span class="project-status active">● IN PROGRESS</span>
         </div>
         <h3 class="project-title" v-scramble>明日方舟电子通行证简易版</h3>
-        <div class="project-meta">
-          <span class="meta-tag">TYPE: WEB APP</span>
-          <span class="meta-tag">PROGRESS: 45%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 45%"></div>
-        </div>
       </div>
       
       <div class="project-card">
@@ -29,13 +22,6 @@
           <span class="project-status active">● IN PROGRESS</span>
         </div>
         <h3 class="project-title" v-scramble>IoT Life Logging项目</h3>
-        <div class="project-meta">
-          <span class="meta-tag">TYPE: IoT</span>
-          <span class="meta-tag">PROGRESS: 30%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 30%"></div>
-        </div>
       </div>
     </div>
     
