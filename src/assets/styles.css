@@ -1,52 +1,5 @@
 ﻿
 
-/* --- 谷歌字体本地化指南 --- */
-/* 步骤：
-   1. 将下载的 .woff2 文件放入 src/assets/fonts/ 目录。
-   2. 取消下方 @font-face 的注释。
-   3. 删除或注释掉底部的 @import url(...)。
-*/
-
-/* 示例：本地引入 Space Grotesk */
-/*
-@font-face {
-  font-family: 'Space Grotesk';
-  font-style: normal;
-  font-weight: 700;
-  src: url('../assets/fonts/space-grotesk-v13-latin-700.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Space Grotesk';
-  font-style: normal;
-  font-weight: 300;
-  src: url('../assets/fonts/space-grotesk-v13-latin-300.woff2') format('woff2');
-}
-*/
-
-/* 示例：本地引入 JetBrains Mono */
-/*
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 400;
-  src: url('../assets/fonts/jetbrains-mono-v13-latin-400.woff2') format('woff2');
-}
-*/
-
-/* 示例：本地引入 Noto Sans SC (中文) */
-/*
-@font-face {
-  font-family: 'Noto Sans SC';
-  font-style: normal;
-  font-weight: 500;
-  src: url('../assets/fonts/noto-sans-sc-v26-chinese-simplified-500.woff2') format('woff2');
-}
-*/
-
-/* --- 暂时保留在线链接作为备用，当你配置好本地字体后，请注释掉下面这一行 --- */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&family=Space+Grotesk:wght@300;500;700&family=Noto+Sans+SC:wght@300;500;700&display=swap');
-
-
 /* --- 全局变量系统 (Design Tokens) --- */
 :root {
   /* 1. 色彩系统 */

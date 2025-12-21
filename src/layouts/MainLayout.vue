@@ -401,6 +401,21 @@ const handleWheel = (event) => {
 };
 </script>
 <style>
+/* 自定义字体 */
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('@/assets/SpaceGrotesk-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('@/assets/NotoSansSC-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
 /* 全局变量 */
 :root {
   --color-bg: #050505;
@@ -421,7 +436,7 @@ body {
   cursor: none !important; /* 确保所有元素都不显示默认光标 */
 }
 #app-layout {
-  font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
   color: var(--color-text-main);
   width: 100vw;
   height: 100vh;
@@ -552,7 +567,6 @@ body {
 .sidebar-sub {
   font-size: 0.9rem;
   margin-left: 10px;
-  font-family: monospace;
   opacity: 0.3;
 }
 /* 菜单触发器 - SVG图标版本 */
@@ -1049,7 +1063,7 @@ body {
 }
 
 .glitch-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
   font-size: 3rem;
   margin: 0 0 1rem 0;
   line-height: 0.9;
