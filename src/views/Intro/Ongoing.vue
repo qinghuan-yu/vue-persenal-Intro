@@ -7,29 +7,45 @@
     </div>
     
     <!-- 项目列表 -->
-    <div class="project-section">
-      <div class="project-card">
+    <div class="project-section" @wheel.stop>
+      <a href="https://github.com/qinghuan-yu/gif-player" target="_blank" class="project-card">
         <div class="project-header">
           <span class="project-id">PROJ-001</span>
           <span class="project-status active">● IN PROGRESS</span>
         </div>
-        <h3 class="project-title" v-scramble>明日方舟电子通行证简易版</h3>
-      </div>
+        <h3 class="project-title" v-scramble>gif-player</h3>
+      </a>
       
-      <div class="project-card">
+      <a href="https://github.com/qinghuan-yu/vue-piano" target="_blank" class="project-card">
         <div class="project-header">
           <span class="project-id">PROJ-002</span>
           <span class="project-status active">● IN PROGRESS</span>
         </div>
-        <h3 class="project-title" v-scramble>IoT Life Logging项目</h3>
-      </div>
+        <h3 class="project-title" v-scramble>vue-piano</h3>
+      </a>
+
+      <a href="https://github.com/qinghuan-yu/Pianalysis" target="_blank" class="project-card">
+        <div class="project-header">
+          <span class="project-id">PROJ-003</span>
+          <span class="project-status active">● IN PROGRESS</span>
+        </div>
+        <h3 class="project-title" v-scramble>Pianalysis</h3>
+      </a>
+
+      <a href="https://github.com/qinghuan-yu/Vue-projekt-" target="_blank" class="project-card">
+        <div class="project-header">
+          <span class="project-id">PROJ-004</span>
+          <span class="project-status active">● IN PROGRESS</span>
+        </div>
+        <h3 class="project-title" v-scramble>This Vue Project</h3>
+      </a>
     </div>
     
     <!-- 统计装饰 -->
     <div class="stats-footer">
       <div class="stat-item">
         <span class="stat-label">TOTAL</span>
-        <span class="stat-value">02</span>
+        <span class="stat-value">04</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">STATUS</span>
@@ -97,6 +113,28 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  height: 300px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  overscroll-behavior: contain;
+}
+
+.project-section::-webkit-scrollbar {
+  width: 4px;
+}
+
+.project-section::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.project-section::-webkit-scrollbar-thumb {
+  background: #61b1d6;
+  border-radius: 2px;
+}
+
+a.project-card {
+  text-decoration: none;
+  display: block;
 }
 
 .project-card {

@@ -18,8 +18,8 @@ class ScrambleText {
     for (let i = 0; i < length; i++) {
       const from = oldText[i] || '';
       const to = newText[i] || '';
-      const start = Math.floor(Math.random() * 160);
-      const end = start + Math.floor(Math.random() * 160);
+      const start = Math.floor(Math.random() * 120);
+      const end = start + Math.floor(Math.random() * 120);
       this.queue.push({ from, to, start, end });
     }
     cancelAnimationFrame(this.animationFrameId);
