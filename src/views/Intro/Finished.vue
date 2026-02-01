@@ -15,7 +15,7 @@
         </div>
         <div class="archive-content">
           <span class="link-icon">→</span>
-          <a href="https://github.com/qinghuan-yu/Vue-projekt-" target="_blank" rel="noopener noreferrer" v-scramble>
+          <a href="https://github.com/qinghuan-yu/vue-persenol-Intro" target="_blank" rel="noopener noreferrer" v-scramble>
             This Vue Project
           </a>
         </div>

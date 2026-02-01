@@ -32,7 +32,7 @@
         <h3 class="project-title" v-scramble>Pianalysis</h3>
       </a>
 
-      <a href="https://github.com/qinghuan-yu/Vue-projekt-" target="_blank" class="project-card">
+      <a href="https://github.com/qinghuan-yu/vue-persenol-Intro" target="_blank" class="project-card">
         <div class="project-header">
           <span class="project-id">PROJ-004</span>
           <span class="project-status active">● IN PROGRESS</span>
