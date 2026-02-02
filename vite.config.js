@@ -10,6 +10,7 @@ export default defineConfig({
     }
   },
   build: {
+    cssCodeSplit: false,
     // 优化构建配置
     rollupOptions: {
       output: {
@@ -22,7 +23,7 @@ export default defineConfig({
       }
     },
     // 提高 chunk 大小警告阈值
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 2000
   },
   // 优化开发服务器
   server: {
