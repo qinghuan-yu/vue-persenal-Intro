@@ -5,6 +5,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { PRELOAD_LIST } from '@/config/assets';
 
 const router = useRouter();
 
@@ -19,17 +20,7 @@ onMounted(() => {
 // 预加载函数
 const preloadAllAssets = () => {
   // 1. 预加载所有图片资源
-  const imagesToPreload = [
-    '/src/assets/proj.png',
-    '/src/assets/pcb.png',
-    '/src/assets/piano.png',
-    '/src/assets/AI.png',
-    '/src/assets/music.png',
-    '/src/assets/mail.png',
-    '/src/assets/github.png'
-  ];
-  
-  imagesToPreload.forEach(src => {
+  PRELOAD_LIST.forEach(src => {
     const img = new Image();
     img.src = src;
   });

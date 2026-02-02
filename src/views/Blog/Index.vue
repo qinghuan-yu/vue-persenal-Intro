@@ -2,76 +2,50 @@
   <section class="archive-container">
     <div class="layer-content">
       <div class="archive-wrapper">
-        <!-- Left Panel -->
+        <!-- Left Panel: Post List -->
         <div class="archive-left">
-          <div class="archive-header">
-            <h4 class="title-cn">博客文章</h4>
-            <p class="title-en">My Blog</p>
-            <div class="title-line"></div>
-          </div>
-
-          <div class="archive-tabs">
-            <button 
-              v-for="item in archiveList" 
-              :key="item.id"
-              @click="activeTab = item.id"
-              class="tab-btn"
-              :class="{ active: activeTab === item.id }"
+          <!-- Post List -->
+          <div class="archive-list-container">
+            <transition-group 
+              tag="div" 
+              name="staggered-list" 
+              class="archive-list"
+              appear
             >
-              <div class="tab-indicator"></div>
-              <div class="tab-content">
-                <span class="tab-label">{{ item.label }}</span>
-                <span class="tab-cn">{{ item.cn }}</span>
-              </div>
-            </button>
+              <button 
+                v-for="(post, index) in posts" 
+                :key="post.id"
+                @click="selectPost(post)"
+                class="ak-list-item"
+                :class="{ active: activePostId === post.id }"
+                :style="{ '--i': index }"
+              >
+                <div class="item-content-row">
+                   <h3 class="item-title-cn">{{ post.title }}</h3>
+                   <span class="item-subtitle-en">{{ post.displayDate }}</span>
+                </div>
+                <div class="item-separator"></div>
+              </button>
+            </transition-group>
           </div>
         </div>
 
-        <!-- Right Panel -->
+        <!-- Right Panel: Content -->
         <div class="archive-right">
-          <div class="data-card">
-            <div class="card-main">
-              <div class="data-header">
-                <div class="pulse-dot"></div>
-                <span class="stream-text">Relic Data Stream</span>
-              </div>
-              
-              <div class="content-area">
-                 <transition name="fade" mode="out-in">
-                   <div :key="activeTab" class="tab-pane">
-                     <h5 class="pane-title">{{ currentItem.cn }}</h5>
-                   <transition-group 
-                      tag="ul" 
-                      name="staggered-list" 
-                      class="detail-list"
-                      appear
-                   >
-                       <li 
-                         v-for="(detail, idx) in currentItem.details" 
-                         :key="detail" 
-                         class="detail-item"
-                         :style="{ '--i': idx }"
-                       >
-                         {{ detail }}
-                       </li>
-                   </transition-group>
-                   </div>
-                 </transition>
-              </div>
-            </div>
-            
-            <div class="card-sidebar">
-               <div class="box-icon">[BOX]</div>
-               <div class="sidebar-lines">
-                  <div class="line-lg"></div>
-                  <div class="line-sm"></div>
+          <!-- Removed explicit progress bar UI, kept scroll container -->
+          <transition name="list-section" mode="out-in">
+            <div :key="activePostId" class="post-content-container">
+               <div v-if="currentPostContent" 
+                    class="markdown-scroll-wrapper" 
+                    @wheel.stop
+               >
+                  <MarkdownRenderer :source="currentPostContent" />
                </div>
-               <div class="sidebar-footer">
-                  <p class="sid"></p>
-                  <p class="sverified">Verified</p>
+               <div v-else class="empty-state">
+                  Select a post to view // INITIALIZING...
                </div>
             </div>
-          </div>
+          </transition>
         </div>
       </div>
     </div>
@@ -79,17 +53,53 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import MarkdownRenderer from '@/components/MarkdownRenderer.vue';
 
-const activeTab = ref('tech');
+// Raw import modules - Vite feature
+// 这里的 ?raw 是 Vite 的特殊语法，将文件作为字符串导入
+const modules = import.meta.glob('@/posts/*.md', { query: '?raw', import: 'default', eager: true });
 
-const archiveList = [
-  { id: 'tech', label: 'TECH NOTE', cn: '技术笔记', details: ['Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 'Sed do eiusmod tempor incididunt ut labore.', 'Ut enim ad minim veniam, quis nostrud exercitation.'] },
-  { id: 'life', label: 'DAILY LIFE', cn: '生活随笔', details: ['Duis aute irure dolor in reprehenderit.', 'Excepteur sint occaecat cupidatat non proident.', 'Sunt in culpa qui officia deserunt mollit.'] },
-  { id: 'music', label: 'MUSIC PROD', cn: '音乐创作', details: ['Nemo enim ipsam voluptatem quia voluptas sit.', 'Neque porro quisquam est, qui dolorem ipsum.', 'Quis autem vel eum iure reprehenderit qui.'] },
-];
+const posts = ref([]);
+const activePostId = ref(null);
 
-const currentItem = computed(() => archiveList.find(i => i.id === activeTab.value));
+onMounted(() => {
+  // Process imported modules
+  const loadedPosts = [];
+  let index = 0;
+  
+  for (const path in modules) {
+    const content = modules[path];
+    const titleMatch = content.match(/title:\s*"(.*?)"/);
+    const dateMatch = content.match(/date:\s*"(.*?)"/);
+    // Simple logic to extract date parts for display "YYYY // MM / DD"
+    const rawDate = dateMatch ? dateMatch[1] : '2026-01-01';
+    const displayDate = rawDate.replace(/-/g, ' / ').replace(/^(\d{4}) \/ /, '$1 // ');
+    
+    loadedPosts.push({
+      id: index++,
+      title: titleMatch ? titleMatch[1] : 'Untitled Post',
+      date: rawDate,
+      displayDate: displayDate, // Formatted for the new list style
+      content: content,
+      path: path
+    });
+  }
+  
+  posts.value = loadedPosts;
+  if(posts.value.length > 0) {
+    selectPost(posts.value[0]);
+  }
+});
+
+const selectPost = (post) => {
+  activePostId.value = post.id;
+};
+
+const currentPostContent = computed(() => {
+  const p = posts.value.find(x => x.id === activePostId.value);
+  return p ? p.content : '';
+});
 </script>
 
 <style scoped>
@@ -171,66 +181,126 @@ const currentItem = computed(() => archiveList.find(i => i.id === activeTab.valu
   background: #22d3ee;
 }
 
+/* --- New Arknights Style List --- */
+.category-tabs {
+  display: flex;
+  margin-bottom: 0px; 
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.cat-tab {
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.cat-tab:hover {
+  color: white;
+}
+
+.cat-tab.active {
+  background: #22d3ee;
+  color: black;
+}
+
+.tab-arrow {
+  font-family: monospace;
+  font-weight: bold;
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  gap: 24px;
+}
+
+.ak-list-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  opacity: 0.6;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ak-list-item:hover {
+  opacity: 1;
+  background: transparent;
+  transform: translateX(10px) scale(1.02);
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.ak-list-item.active {
+  opacity: 1;
+  background: transparent;
+}
+
+.item-content-row {
+  display: flex;
+  align-items: baseline;
+  padding-bottom: 8px;
+  gap: 12px;
+}
+
+.item-title-cn {
+  font-size: 24px; /* Increased from 20px */
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.item-subtitle-en {
+  font-family: 'Courier New', monospace;
+  font-size: 14px; /* Increased from 12px */
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+  font-weight: 700;
+}
+
+.item-separator {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.3s;
+}
+
+.ak-list-item:hover .item-separator {
+  background: white;
+}
+
+.ak-list-item.active .item-separator {
+  background: #22d3ee;
+  height: 2px;
+}
+
+/* Remove old tab styles */
+/*
 .archive-tabs {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+... (Old styles removed by replacement)
+*/
 
-.tab-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s;
-  text-align: left;
-}
-
-.tab-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.tab-btn.active {
-  background: #06b6d4; /* cyan-500 */
-  border-color: #06b6d4;
-  color: black;
-  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
-}
-
-.tab-indicator {
-  width: 4px;
-  height: 12px;
-  background: #22d3ee;
-  margin-right: 16px;
-  transition: background 0.3s;
-}
-.tab-btn.active .tab-indicator {
-  background: black;
-}
-
-.tab-content {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.tab-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.tab-cn {
-  font-size: 9px;
-  font-weight: 500;
-  opacity: 0.4;
-}
-.tab-btn.active .tab-cn { opacity: 0.8; }
+/* Glitch Effect Element - REMOVED */
+/* Progress Bar Interface - REMOVED */
 
 /* Right Card */
 .data-card {
@@ -357,13 +427,68 @@ const currentItem = computed(() => archiveList.find(i => i.id === activeTab.valu
 /* Staggered List Animation */
 .staggered-list-enter-active,
 .staggered-list-leave-active {
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: calc(var(--i) * 0.1s);
 }
 
 .staggered-list-enter-from,
 .staggered-list-leave-to {
   opacity: 0;
-  transform: translateX(-50px);
+  transform: translateY(-40px); /* Slide in from TOP */
+}
+
+/* Post Content Animation (Transition) */
+.list-section-enter-active,
+.list-section-leave-active {
+  transition: all 0.4s ease;
+}
+
+.list-section-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.list-section-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Scroll Container & Scrollbar Layout */
+.post-content-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.markdown-scroll-wrapper {
+  width: 100%;
+  max-width: 800px;
+  height: 65vh; /* Fixed height to enable scrolling */
+  overflow-y: auto;
+  padding-right: 16px;
+  
+  /* Firefox Scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 211, 238, 0.3) rgba(255, 255, 255, 0.05);
+}
+
+/* Webkit (Chrome/Safari/Edge) Scrollbar */
+.markdown-scroll-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
+.markdown-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05); /* Dark track */
+  border-radius: 3px;
+}
+
+.markdown-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.3); /* Cyan thumb */
+  border-radius: 3px;
+  transition: background 0.3s;
+}
+
+.markdown-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.6); /* Brighter hover */
 }
 </style>

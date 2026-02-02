@@ -43,12 +43,7 @@
 
 <script setup>
 import { onMounted } from 'vue';
-
-// 导入所有项目图片用于预加载
-import pcbUrl from '@/assets/proj.png';
-import pcb2Url from '@/assets/pcb.png';
-import pianoUrl from '@/assets/piano.png';
-import aiUrl from '@/assets/AI.png';
+import { PRELOAD_LIST } from '@/config/assets';
 
 onMounted(() => {
   // 检查是否是网站首次加载（整个会话的第一次访问）
@@ -64,8 +59,7 @@ onMounted(() => {
   }
   
   // 🔥 在后台预加载所有项目图片
-  const projectImages = [pcbUrl, pcb2Url, pianoUrl, aiUrl];
-  projectImages.forEach(src => {
+  PRELOAD_LIST.forEach(src => {
     const img = new Image();
     img.src = src;
     // 浏览器会自动缓存这些图片，切换到 Projects 页面时无延迟

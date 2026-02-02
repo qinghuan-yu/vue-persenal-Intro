@@ -6,15 +6,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { usePixiApp } from '@/composables/usePixiApp';
-
-// 资源导入
-import pcbUrl from '@/assets/proj.png';
-import pcb2Url from '@/assets/pcb.png';
-import pianoUrl from '@/assets/piano.png';
-import aiUrl from '@/assets/AI.png';
-import musicPng from '@/assets/music.png';
-import mailPng from '@/assets/mail.png';
-import githubPng from '@/assets/github.png';
+import { ASSETS } from '@/config/assets';
 
 const container = ref(null);
 const route = useRoute();
@@ -64,14 +56,14 @@ const updateParticlesByRoute = async (path) => {
   } else if (path.includes('projects')) {
     // Projects 页面：默认显示 PCB1 (pcbUrl) 在右侧 (0.75)，列表在左侧
     await morphToShapes([
-      { source: pcbUrl, options: { ...commonOptions, layoutX: 0.75 } }
+      { source: ASSETS.PROJ_MAIN, options: { ...commonOptions, layoutX: 0.75 } }
     ]);
   } else if (path.includes('contact')) {
     // Contact 页面：显示三个图标
     await morphToShapes([
-      { source: musicPng, options: { ...commonOptions, sampleRate: 3 } },
-      { source: mailPng, options: { ...commonOptions, sampleRate: 3 } },
-      { source: githubPng, options: { ...commonOptions, sampleRate: 3 } }
+      { source: ASSETS.ICON_MUSIC, options: { ...commonOptions, sampleRate: 3 } },
+      { source: ASSETS.ICON_MAIL, options: { ...commonOptions, sampleRate: 3 } },
+      { source: ASSETS.ICON_GITHUB, options: { ...commonOptions, sampleRate: 3 } }
     ]);
   } else if (path.includes('blog')) {
     // Blog 页面：散点模式
