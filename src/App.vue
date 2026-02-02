@@ -20,8 +20,8 @@ onMounted(() => {
 const preloadAllAssets = () => {
   // 1. 预加载所有图片资源
   const imagesToPreload = [
+    '/src/assets/proj.png',
     '/src/assets/pcb.png',
-    '/src/assets/pcb2.png',
     '/src/assets/piano.png',
     '/src/assets/AI.png',
     '/src/assets/music.png',

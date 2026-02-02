@@ -136,10 +136,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { usePixiApp } from '@/composables/usePixiApp';
 
 // Asset Imports
-import pcbUrl from '@/assets/pcb.png';
-import pcb2Url from '@/assets/pcb2.png';
+import pcbUrl from '@/assets/proj.png';
+import pcb2Url from '@/assets/pcb.png';
 import pianoUrl from '@/assets/piano.png';
 import aiUrl from '@/assets/AI.png';
+import vueUrl from '@/assets/vue.png';
 // Fallback if needed
 const defaultPcb = pcbUrl;
 
@@ -167,6 +168,14 @@ const projects = [
     desc: '基于Transformer框架的深度学习钢琴音色补全方法，可使用训练好的模型对MIDI文件进行织体补全。',
     link: 'https://github.com/qinghuan-yu/Pianalysis',
     image: aiUrl
+  },
+  { 
+    type: 'WEB', 
+    title: '个人网页', 
+    descTitle: 'PERSONAL INTRO',
+    desc: '一个基于Vue的个人网页。',
+    link: 'https://github.com/qinghuan-yu/vue-persenol-Intro',
+    image: vueUrl
   },
 ];
 
@@ -679,7 +688,7 @@ onUnmounted(() => {
 .bottom-bar-appear-active {
   transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
               transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  transition-delay: 0.5s; /* Delay after detail content appears */
+  transition-delay: 0.1s; /* Reduced Delay for faster appearance */
 }
 .bottom-bar-leave-active {
   transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),

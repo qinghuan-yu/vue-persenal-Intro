@@ -8,8 +8,8 @@ import { useRoute } from 'vue-router';
 import { usePixiApp } from '@/composables/usePixiApp';
 
 // 资源导入
-import pcbUrl from '@/assets/pcb.png';
-import pcb2Url from '@/assets/pcb2.png';
+import pcbUrl from '@/assets/proj.png';
+import pcb2Url from '@/assets/pcb.png';
 import pianoUrl from '@/assets/piano.png';
 import aiUrl from '@/assets/AI.png';
 import musicPng from '@/assets/music.png';
