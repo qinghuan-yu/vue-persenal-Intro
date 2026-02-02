@@ -1,5 +1,26 @@
 <template>
-  <div class="markdown-body" v-html="htmlContent"></div>
+  <div class="renderer-container">
+    <!-- Meta Header (Desc & Tags) -->
+    <div v-if="metadata.desc || (metadata.tags && metadata.tags.length)" class="post-meta-header">
+       <div v-if="metadata.desc" class="meta-desc">
+          <span class="prefix">ABSTRACT //</span>
+          <span class="desc-text">{{ metadata.desc }}</span>
+       </div>
+       <div v-if="metadata.tags && metadata.tags.length" class="meta-tags">
+          <span class="prefix">TAGS //</span>
+          <div class="tags-list">
+            <span v-for="tag in metadata.tags" :key="tag" class="tag-chip">
+                {{ tag }}
+            </span>
+          </div>
+       </div>
+       <div class="header-divider">
+         <div class="dashed-line"></div>
+       </div>
+    </div>
+
+    <div class="markdown-body" v-html="htmlContent"></div>
+  </div>
 </template>
 
 <script setup>
@@ -34,9 +55,28 @@ const init = async () => {
             if (parts.length >= 2) {
                 const key = parts[0].trim();
                 let value = parts.slice(1).join(':').trim();
+                
+                // Handle basic string values
                 if (value.startsWith('"') && value.endsWith('"')) {
                     value = value.slice(1, -1);
+                } else if (value.startsWith("'") && value.endsWith("'")) {
+                    value = value.slice(1, -1);
                 }
+
+                // Handle Tags Array (Simple JSON-like or Comma-separated)
+                if (key === 'tags') {
+                    if (value.startsWith('[') && value.endsWith(']')) {
+                        // Remove brackets and quotes, then split
+                        value = value.slice(1, -1)
+                            .split(',')
+                            .map(s => s.trim().replace(/^["']|["']$/g, '')) // Remove surrounding quotes
+                            .filter(Boolean);
+                    } else {
+                        // Plain listing
+                         value = [value];
+                    }
+                }
+
                 metadataObj[key] = value;
             }
         });
@@ -131,5 +171,76 @@ watchEffect(() => {
 .markdown-body table th, .markdown-body table td {
     border: 1px solid rgba(255,255,255,0.2);
     padding: 8px 12px;
+}
+
+/* Meta Header Styles */
+.post-meta-header {
+  margin-bottom: 2rem;
+  font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.meta-desc {
+  display: flex;
+  margin-bottom: 0.8rem;
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.8rem 1rem;
+  border-left: 3px solid #00f0ff; /* Cyan accent */
+}
+
+.meta-desc .prefix {
+  color: #00f0ff;
+  font-weight: bold;
+  margin-right: 0.8rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.meta-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 0.5rem;
+}
+
+.meta-tags .prefix {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: bold;
+  margin-right: 0.8rem;
+  user-select: none;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-chip {
+  background: rgba(0, 240, 255, 0.15);
+  color: #00f0ff;
+  padding: 0.1em 0.5em;
+  border-radius: 2px;
+  font-size: 0.85em;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.header-divider {
+  margin-top: 1.5rem;
+  width: 100%;
+  height: 1px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashed-line {
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(to right, rgba(255,255,255,0.3) 50%, transparent 50%);
+    background-size: 8px 1px;
+    background-repeat: repeat-x;
 }
 </style>
