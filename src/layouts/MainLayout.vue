@@ -33,7 +33,10 @@
       </div>
 
       <div class="nav-right">
-        <!-- Links Removed -->
+        <a href="https://terminal.reliarc.com" target="_blank" class="nav-item terminal-link">
+          <span class="item-label">TERMINAL</span>
+          <span class="item-sub">终端</span>
+        </a>
       </div>
     </nav>
 
@@ -59,7 +62,9 @@
           mode="out-in"
           @before-leave="onBeforeLeave"
         >
-          <component :is="Component" :key="route.fullPath" />
+          <div :key="route.fullPath" class="view-wrapper">
+            <component :is="Component" />
+          </div>
         </transition>
       </router-view>
     </main>
@@ -279,6 +284,30 @@ const indicatorPosition = computed(() => {
   gap: 24px;
 }
 
+/* Terminal Link Styling */
+.terminal-link {
+  padding: 8px 16px;
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  border-radius: 4px;
+  transition: all 0.3s;
+  background: rgba(34, 211, 238, 0.05);
+}
+
+.terminal-link:hover {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.15);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.3);
+  transform: translateY(-2px);
+}
+
+.terminal-link .item-label {
+  color: #22d3ee;
+}
+
+.terminal-link .item-sub {
+  color: rgba(34, 211, 238, 0.7);
+}
+
 .icon-link {
   color: white;
   text-decoration: none;
@@ -370,6 +399,14 @@ const indicatorPosition = computed(() => {
   width: 100%;
   position: relative;
   box-sizing: border-box;
+  background-color: #050505; /* 强制黑色背景，防止白屏闪烁 */
+}
+
+/* 视图包装器 - 防止过渡时白屏 */
+.view-wrapper {
+  width: 100%;
+  min-height: calc(100vh - 96px);
+  background-color: #050505;
 }
 
 /* Footer */

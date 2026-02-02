@@ -244,8 +244,8 @@ export function useAdvancedParticles(app) {
 
     // --- 交互事件处理 ---
     function handleMouseMove(e) {
-        if (!app.view) return;
-        const rect = app.view.getBoundingClientRect();
+        if (!app.canvas) return;
+        const rect = app.canvas.getBoundingClientRect();
         mouseX = e.clientX - rect.left;
         mouseY = e.clientY - rect.top;
     }
@@ -270,9 +270,8 @@ export function useAdvancedParticles(app) {
             
             // Unified Render
             if (p.currentRenderAlpha > 0.01) {
-                graphics.beginFill(p.currentColor, p.currentRenderAlpha);
-                graphics.drawCircle(p.x, p.y, p.radius);
-                graphics.endFill();
+                graphics.circle(p.x, p.y, p.radius);
+                graphics.fill({ color: p.currentColor, alpha: p.currentRenderAlpha });
             }
         });
     }
@@ -498,28 +497,35 @@ export function useAdvancedParticles(app) {
             fillParticles(shape, tx, ty, VISUAL_SCALE);
 
         } else if (qrShapes.length === 3) {
-             // === 3图片模式 (New Contact Page) ===
+             // === 3图片模式 (Contact Page) ===
              // Music(Left), Mail(Center), Github(Right)
-             const scale = isMobile ? 1.0 : 1.2; // Slightly smaller to fit 3
-             const gap = isMobile ? 150 : 300;
+             // 图标应该显示在对应文字上方
+             const scale = isMobile ? 0.8 : 1.0;
+             const gap = isMobile ? 150 : 300; // 水平间距
              
-             // 1. Left
+             // Y轴定位：稍微偏上，为底部文字留空间
+             const iconY = centerY - 80; // 图标中心位置，向上偏移80px
+             
+             // 1. Left (Music)
              if (qrShapes[0]) {
                  const shape = qrShapes[0];
                  const dw = shape.width * scale;
-                 fillParticles(shape, centerX - gap - dw/2, centerY - shape.height*scale/2, scale);
+                 const dh = shape.height * scale;
+                 fillParticles(shape, centerX - gap - dw/2, iconY - dh/2, scale);
              }
-             // 2. Center
+             // 2. Center (Mail)
              if (qrShapes[1]) {
                  const shape = qrShapes[1];
                  const dw = shape.width * scale;
-                 fillParticles(shape, centerX - dw/2, centerY - shape.height*scale/2, scale);
+                 const dh = shape.height * scale;
+                 fillParticles(shape, centerX - dw/2, iconY - dh/2, scale);
              }
-             // 3. Right
+             // 3. Right (Github)
              if (qrShapes[2]) {
                  const shape = qrShapes[2];
                  const dw = shape.width * scale;
-                 fillParticles(shape, centerX + gap - dw/2, centerY - shape.height*scale/2, scale);
+                 const dh = shape.height * scale;
+                 fillParticles(shape, centerX + gap - dw/2, iconY - dh/2, scale);
              }
 
         } else if (qrShapes.length >= 2) {
@@ -556,8 +562,6 @@ export function useAdvancedParticles(app) {
             const ty = centerY + textBottomOffset;
             fillParticles(shape, tx, ty, textScale);
         }
-        
-        console.log(`Total particles used: ${particleIndex} / ${particles.length}`);
 
         function fillParticles(shape, startX, startY, scale) {
             shuffleArray(shape.points);

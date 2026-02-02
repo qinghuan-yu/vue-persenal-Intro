@@ -143,7 +143,7 @@ const showIcons = async () => {
   justify-content: center;
   align-items: center;
   gap: 15rem; /* Match the 300px gap in particle system approximately */
-  margin-top: 100px;
+  margin-top: 20px; /* 减少 margin，让文字更接近图标 */
   pointer-events: auto;
 }
 

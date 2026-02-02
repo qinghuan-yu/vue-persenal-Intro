@@ -21,10 +21,10 @@
   --element-offset: calc(var(--ui-margin) - (var(--dot-size) / 2));
 }
 
-/* 基础重置 */
+/* 基础重置 - 强制黑色背景 */
 html,
 body {
-  background-color: var(--color-bg);
+  background-color: #050505 !important; /* 强制黑色，防止任何闪烁 */
   color: var(--color-text-main);
   /* 字体组合 */
   font-family: 'Space Grotesk', 'Noto Sans SC', monospace; 
@@ -33,6 +33,16 @@ body {
   padding: 0;
   width: 100vw;
   height: 100vh;
+}
+
+/* 确保所有元素继承黑色背景 */
+* {
+  box-sizing: border-box;
+}
+
+#app {
+  background-color: #050505 !important; /* 强制黑色 */
+  min-height: 100vh;
 }
 
 canvas {
@@ -124,7 +134,8 @@ canvas {
 /* 2. 激活状态 (Active) - 必须定义以保持过渡 */
 .parallax-enter-active,
 .parallax-leave-active {
-    transition: all 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+    background-color: transparent; /* 确保过渡期间不会显示白色 */
 }
 
 /* 3. 离开 (Leave) - 页面消失 */

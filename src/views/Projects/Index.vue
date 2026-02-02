@@ -98,8 +98,20 @@
             <svg viewBox="0 0 24 24" width="48" height="48"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
         </button>
 
-        <!-- Bottom Bar (Out of Transition, Persistent) -->
-        <div class="bottom-bar-area">
+      </div>
+
+      <!-- Bottom Bar with Transition (Moved Outside view-detail) -->
+      <transition 
+        name="bottom-bar"
+        appear
+        @before-enter="onBottomBarBeforeEnter"
+        @enter="onBottomBarEnter"
+        @after-enter="onBottomBarAfterEnter"
+        @before-leave="onBottomBarBeforeLeave"
+        @leave="onBottomBarLeave"
+        @after-leave="onBottomBarAfterLeave"
+      >
+        <div v-if="selectedIndex !== -1" class="bottom-bar-area">
            <div class="bar-progress-bg">
               <div class="bar-progress-fill" :style="{ width: ((selectedIndex + 1) / projects.length) * 100 + '%' }"></div>
            </div>
@@ -115,8 +127,7 @@
                </div>
            </button>
         </div>
-
-      </div>
+      </transition>
     </div>
   </section>
 </template>
@@ -135,26 +146,26 @@ const defaultPcb = pcbUrl;
 
 const projects = [
   { 
-    type: 'WEB', 
+    type: 'IOT', 
     title: 'GIF 播放器',
     descTitle: 'GIF-PLAYER',
-    desc: '提供了逐帧控制 GIF 动画的能力。轻量级布局引擎实现精准的播放操控。',
+    desc: '基于ESP-32以及 TFT 显示屏的便携式 GIF 播放器。支持多种动画格式和自定义播放列表。',
     link: 'https://github.com/qinghuan-yu/gif-player',
     image: pcb2Url
   },
   { 
-    type: 'INTERACTIVE', 
+    type: 'VUE', 
     title: 'Vue 钢琴',
     descTitle: 'VUE-PIANO',
-    desc: '基于 Vue.js 构建的交互式虚拟钢琴。具有逼真的声音合成和响应式键位映射。',
+    desc: '基于 Vue.js 构建的交互式虚拟钢琴。内含天际线算法提取主旋律，可转化为token进行训练',
     link: 'https://github.com/qinghuan-yu/vue-piano',
     image: pianoUrl
   },
   { 
-    type: 'CORE', 
+    type: 'DEEP-LEARNING', 
     title: '演奏分析', 
     descTitle: 'PIANALYSIS',
-    desc: '钢琴演奏的深度分析系统。使用 AI 算法可视化按键力度和时值稳定性。',
+    desc: '基于Transformer框架的深度学习钢琴音色补全方法，可使用训练好的模型对MIDI文件进行织体补全。',
     link: 'https://github.com/qinghuan-yu/Pianalysis',
     image: aiUrl
   },
@@ -182,6 +193,7 @@ const updateParticles = async (imgUrl, layoutX = 0.35) => {
 };
 
 const selectProject = (index) => {
+  console.log('[DEBUG] 选择项目，selectedIndex:', selectedIndex.value, '->', index);
   selectedIndex.value = index;
   // Switch to Detail View: Image on Left (0.35)
   updateParticles(projects[index].image, 0.35);
@@ -204,9 +216,30 @@ const prevProject = () => {
 };
 
 const closeDetail = () => {
+  console.log('[DEBUG] 关闭详情，selectedIndex:', selectedIndex.value, '-> -1');
   selectedIndex.value = -1;
   // Return to List View: Image on RIGHT (0.75) to avoid overlap with Left List
   updateParticles(defaultPcb, 0.75);
+};
+
+// Bottom Bar Transition Debug Hooks
+const onBottomBarBeforeEnter = (el) => {
+  console.log('[DEBUG] 底部栏 before-enter');
+};
+const onBottomBarEnter = (el) => {
+  console.log('[DEBUG] 底部栏 enter - 过渡开始');
+};
+const onBottomBarAfterEnter = (el) => {
+  console.log('[DEBUG] 底部栏 after-enter (完成)');
+};
+const onBottomBarBeforeLeave = (el) => {
+  console.log('[DEBUG] 底部栏 before-leave');
+};
+const onBottomBarLeave = (el) => {
+  console.log('[DEBUG] 底部栏 leave - 过渡开始');
+};
+const onBottomBarAfterLeave = (el) => {
+  console.log('[DEBUG] 底部栏 after-leave (完成)');
 };
 
 // --- Lifecycle ---
@@ -652,6 +685,27 @@ onUnmounted(() => {
     animation-delay: 0.4s;
     opacity: 0;
     transform: translateY(20px);
+}
+
+/* Bottom Bar Transition */
+.bottom-bar-enter-active,
+.bottom-bar-appear-active {
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: 0.5s; /* Delay after detail content appears */
+}
+.bottom-bar-leave-active {
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bottom-bar-enter-from,
+.bottom-bar-appear-from {
+  opacity: 0;
+  transform: translateY(50px);
+}
+.bottom-bar-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
 }
 
 /* Bottom Bar */
