@@ -2,23 +2,13 @@
 
 /* --- 全局变量系统 (Design Tokens) --- */
 :root {
-  /* 1. 色彩系统 */
+  /* 色彩系统 */
   --color-bg: #050505;
   --color-text-main: #e6e6e6;
   --color-text-dim: #888;
   --color-accent: #61b1d6; /* 核心蓝 */
   
   --border-tech: rgba(255, 255, 255, 0.15); 
-  
-  /* 2. 尺寸系统 (放大版 UI) */
-  --ui-margin: 60px;       /* 核心边距：控制线的位置 */
-  --sidebar-width: 400px;  /* 侧边栏宽度 */
-  --dot-size: 10px;        /* 圆点大小 */
-  --line-width: 1px;       /* 线条粗细 */
-  
-  /* 3. 对齐计算 (自动计算圆点偏移量，确保穿过圆心) */
-  /* 公式：边距 - (圆点直径 / 2) = 圆点的起始偏移量 */
-  --element-offset: calc(var(--ui-margin) - (var(--dot-size) / 2));
 }
 
 /* 基础重置 - 强制黑色背景 */

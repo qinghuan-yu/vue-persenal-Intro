@@ -193,7 +193,6 @@ const updateParticles = async (imgUrl, layoutX = 0.35) => {
 };
 
 const selectProject = (index) => {
-  console.log('[DEBUG] 选择项目，selectedIndex:', selectedIndex.value, '->', index);
   selectedIndex.value = index;
   // Switch to Detail View: Image on Left (0.35)
   updateParticles(projects[index].image, 0.35);
@@ -216,31 +215,18 @@ const prevProject = () => {
 };
 
 const closeDetail = () => {
-  console.log('[DEBUG] 关闭详情，selectedIndex:', selectedIndex.value, '-> -1');
   selectedIndex.value = -1;
   // Return to List View: Image on RIGHT (0.75) to avoid overlap with Left List
   updateParticles(defaultPcb, 0.75);
 };
 
-// Bottom Bar Transition Debug Hooks
-const onBottomBarBeforeEnter = (el) => {
-  console.log('[DEBUG] 底部栏 before-enter');
-};
-const onBottomBarEnter = (el) => {
-  console.log('[DEBUG] 底部栏 enter - 过渡开始');
-};
-const onBottomBarAfterEnter = (el) => {
-  console.log('[DEBUG] 底部栏 after-enter (完成)');
-};
-const onBottomBarBeforeLeave = (el) => {
-  console.log('[DEBUG] 底部栏 before-leave');
-};
-const onBottomBarLeave = (el) => {
-  console.log('[DEBUG] 底部栏 leave - 过渡开始');
-};
-const onBottomBarAfterLeave = (el) => {
-  console.log('[DEBUG] 底部栏 after-leave (完成)');
-};
+// Bottom Bar Transition Hooks
+const onBottomBarBeforeEnter = (el) => {};
+const onBottomBarEnter = (el) => {};
+const onBottomBarAfterEnter = (el) => {};
+const onBottomBarBeforeLeave = (el) => {};
+const onBottomBarLeave = (el) => {};
+const onBottomBarAfterLeave = (el) => {};
 
 // --- Lifecycle ---
 

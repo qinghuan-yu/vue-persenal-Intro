@@ -42,11 +42,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
-const hasPlayedIntro = ref(false);
+import { onMounted } from 'vue';
 
 onMounted(() => {
   // 检查是否是网站首次加载（整个会话的第一次访问）
@@ -57,14 +53,8 @@ onMounted(() => {
     // 标记为已访问
     sessionStorage.setItem('hasVisited', 'true');
     
-    // 先隐藏所有元素
-    container.classList.add('first-load-hidden');
-    
-    // 100ms后开始播放动画
-    setTimeout(() => {
-      container.classList.remove('first-load-hidden');
-      container.classList.add('first-load-animate');
-    }, 100);
+    // 添加首次加载类，触发整体淡入动画
+    container.classList.add('first-load');
   }
 });
 </script>
@@ -79,28 +69,20 @@ onMounted(() => {
   height: 100%;
   position: relative;
   overflow: hidden;
+  opacity: 1; /* 默认完全显示 */
 }
 
-/* 首次加载：隐藏所有元素 */
-.identity-container.first-load-hidden .page-exit-item {
-  opacity: 0;
-  transform: translateY(30px);
+/* 首次加载动画：整体从黑色淡入 */
+.identity-container.first-load {
+  animation: fadeInFromBlack 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* 首次加载动画：逐个淡入 */
-.identity-container.first-load-animate .page-exit-item {
-  animation: itemFadeInUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(var(--exit-order) * 0.15s + 0.3s);
-}
-
-@keyframes itemFadeInUp {
+@keyframes fadeInFromBlack {
   from {
     opacity: 0;
-    transform: translateY(30px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

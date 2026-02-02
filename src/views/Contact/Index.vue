@@ -38,7 +38,7 @@ import { usePixiApp } from '../../composables/usePixiApp';
 // Assets
 import musicPng from '@/assets/music.png';
 import mailPng from '@/assets/mail.png';
-import githubPng from '@/assets/gihub.png'; // Typo in filename matches file system
+import githubPng from '@/assets/github.png';
 
 const visualContainer = ref(null);
 const { init, destroy } = usePixiApp();
