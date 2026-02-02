@@ -11,7 +11,41 @@ const router = useRouter();
 onMounted(() => {
   // 强制每次进入或刷新都重置到首页
   router.replace('/identity');
+  
+  // 🔥 预加载所有资源
+  preloadAllAssets();
 });
+
+// 预加载函数
+const preloadAllAssets = () => {
+  // 1. 预加载所有图片资源
+  const imagesToPreload = [
+    '/src/assets/pcb.png',
+    '/src/assets/pcb2.png',
+    '/src/assets/piano.png',
+    '/src/assets/AI.png',
+    '/src/assets/music.png',
+    '/src/assets/mail.png',
+    '/src/assets/github.png'
+  ];
+  
+  imagesToPreload.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+  
+  // 2. 预加载字体
+  if (document.fonts) {
+    document.fonts.load('1em "Space Grotesk"');
+    document.fonts.load('1em "Noto Sans SC"');
+  }
+  
+  // 3. 预触发路由加载
+  const routesToPrefetch = ['/projects', '/blog', '/contact'];
+  routesToPrefetch.forEach(route => {
+    router.resolve(route);
+  });
+};
 </script>
 
 <style>
@@ -19,7 +53,7 @@ onMounted(() => {
 body, html {
   margin: 0;
   padding: 0;
-  background-color: #050505;
+  background-color: #050505 !important; /* 强制黑色 */
   width: 100vw;
   height: 100vh;
   overflow: hidden; /* 接管滚动条，由 MainLayout 内部处理 */

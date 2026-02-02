@@ -44,6 +44,12 @@
 <script setup>
 import { onMounted } from 'vue';
 
+// 导入所有项目图片用于预加载
+import pcbUrl from '@/assets/pcb.png';
+import pcb2Url from '@/assets/pcb2.png';
+import pianoUrl from '@/assets/piano.png';
+import aiUrl from '@/assets/AI.png';
+
 onMounted(() => {
   // 检查是否是网站首次加载（整个会话的第一次访问）
   const isFirstVisit = !sessionStorage.getItem('hasVisited');
@@ -56,6 +62,14 @@ onMounted(() => {
     // 添加首次加载类，触发整体淡入动画
     container.classList.add('first-load');
   }
+  
+  // 🔥 在后台预加载所有项目图片
+  const projectImages = [pcbUrl, pcb2Url, pianoUrl, aiUrl];
+  projectImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+    // 浏览器会自动缓存这些图片，切换到 Projects 页面时无延迟
+  });
 });
 </script>
 
@@ -74,7 +88,7 @@ onMounted(() => {
 
 /* 首次加载动画：整体从黑色淡入 */
 .identity-container.first-load {
-  animation: fadeInFromBlack 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fadeInFromBlack 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes fadeInFromBlack {

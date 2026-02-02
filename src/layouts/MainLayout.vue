@@ -436,24 +436,28 @@ const indicatorPosition = computed(() => {
 .parallax-enter-active,
 .parallax-leave-active {
   transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: #050505 !important; /* 确保过渡期间背景始终黑色 */
 }
 
 /* Entering page (from Bottom) */
 .parallax-enter-from {
   opacity: 0;
   transform: translateY(60px);
+  background-color: #050505 !important;
 }
 
 /* Leaving page (to Top) */
 .parallax-leave-to {
   opacity: 0;
   transform: translateY(-60px);
+  background-color: #050505 !important;
 }
 
 .parallax-enter-to,
 .parallax-leave-from {
   opacity: 1;
   transform: translateY(0);
+  background-color: #050505 !important;
 }
 
 .fade-enter-active,
