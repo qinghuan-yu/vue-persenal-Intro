@@ -9,9 +9,8 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 onMounted(() => {
-  // 🛡️ 核心需求：强制每次进入或刷新都重置到个人主页
-  // 使用 replace 避免在历史记录里留下一堆跳转痕迹
-  router.replace('/intro/personal');
+  // 强制每次进入或刷新都重置到首页
+  router.replace('/identity');
 });
 </script>
 

@@ -459,12 +459,6 @@ export function useAdvancedParticles(app) {
             return;
         }
         
-        // 调试输出
-        console.log('=== Particle Shape Debug ===');
-        validShapes.forEach((shape, idx) => {
-            console.log(`Shape ${idx}: type=${shape.type}, points=${shape.points.length}, size=${Math.round(shape.width)}x${Math.round(shape.height)}`);
-        });
-        
         // --- 智能布局 (Smart Layout) ---
         const qrShapes = validShapes.filter(s => s.type === 'image');
         const textShapes = validShapes.filter(s => s.type === 'text');

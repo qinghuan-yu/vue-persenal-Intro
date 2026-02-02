@@ -3,16 +3,16 @@
     <!-- Content Layer -->
     <div class="layer-content">
       <div class="identity-wrapper">
-        <div class="profile-header">
+        <div class="profile-header page-exit-item" style="--exit-order: 0;">
           <div class="h-line-anim"></div>
           <span class="header-tag">Profile Authenticated</span>
         </div>
         
-        <h1 class="main-title">I am Relic<br><span class="blue-text">I am Ark</span></h1>
+        <h1 class="main-title page-exit-item" style="--exit-order: 1;">I am Relic<br><span class="blue-text">I am Ark</span></h1>
         
         <div class="detail-grid">
           <div class="detail-left">
-            <div class="detail-item group">
+            <div class="detail-item group page-exit-item" style="--exit-order: 2;">
               <div class="icon-wrap">[MONITOR]</div>
               <div>
                 <p class="detail-sub">Status / Objective</p>
@@ -20,7 +20,7 @@
               </div>
             </div>
             
-            <div class="detail-item group">
+            <div class="detail-item group page-exit-item" style="--exit-order: 3;">
               <div class="icon-wrap">[MUSIC]</div>
               <div>
                 <p class="detail-sub">Artist IN</p>
@@ -30,7 +30,7 @@
           </div>
 
           <div class="detail-right">
-            <div class="signature-box">
+            <div class="signature-box page-exit-item" style="--exit-order: 4;">
                <p class="sig-label">Signature</p>
                <p class="sig-val" style="font-family: 'Noto Sans SC', serif;">清棫</p>
             </div>
@@ -54,6 +54,17 @@
   height: 100%;
   position: relative;
   overflow: hidden;
+}
+
+/* Page exit stagger animation */
+.page-exit-item {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition-delay: calc(var(--exit-order) * 0.1s);
+}
+
+.identity-container.page-leaving .page-exit-item {
+  opacity: 0;
+  transform: translateY(-30px);
 }
 
 .layer-content {
@@ -164,11 +175,11 @@
 }
 
 .signature-box {
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   border-left: 2px solid #22d3ee;
   padding: 24px;
   width: 100%;
-  backdrop-filter: blur(12px);
+  backdrop-filter: none;
 }
 @media (min-width: 768px) {
   .signature-box { width: 288px; }

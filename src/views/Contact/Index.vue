@@ -4,7 +4,7 @@
     
     <!-- Interaction Layer -->
     <div class="content-layer">
-      <div class="header-area">
+      <div class="header-area page-exit-item" style="--exit-order: 0;">
          <h2>CONTACT CHANNELS</h2>
          <div class="sub-line">COMM_MODULE // ACTIVE</div>
       </div>
@@ -12,17 +12,17 @@
       <!-- Invisible Click Areas for 3 Icons -->
       <!-- Adjusted to match particle positions in useAdvancedParticles (Left, Center, Right) -->
       <div class="click-zones">
-         <a href="https://music.163.com/#/artist?id=100570638" target="_blank" class="zone-item">
+         <a href="https://music.163.com/#/artist?id=100570638" target="_blank" class="zone-item page-exit-item" style="--exit-order: 1;">
             <div class="zone-label">MUSIC</div>
             <div class="zone-sub">MUSIC163</div>
          </a>
          
-         <a href="mailto:Reliarc.me@outlook.com" class="zone-item">
+         <a href="mailto:Reliarc.me@outlook.com" class="zone-item page-exit-item" style="--exit-order: 2;">
             <div class="zone-label">MAIL</div>
             <div class="zone-sub">Reliarc.me@outlook.com</div>
          </a>
          
-         <a href="https://github.com/qinghuan-yu" target="_blank" class="zone-item">
+         <a href="https://github.com/qinghuan-yu" target="_blank" class="zone-item page-exit-item" style="--exit-order: 3;">
             <div class="zone-label">GITHUB</div>
             <div class="zone-sub">Source Code</div>
          </a>
@@ -104,6 +104,17 @@ const showIcons = async () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+/* Page exit stagger animation */
+.page-exit-item {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition-delay: calc(var(--exit-order) * 0.1s);
+}
+
+.contact-page.page-leaving .page-exit-item {
+  opacity: 0;
+  transform: translateY(-30px);
 }
 
 .header-area {

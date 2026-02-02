@@ -10,7 +10,7 @@
       <!-- Wrapper for list view content, handled by internal staggering -->
       <transition name="list-section">
       <div v-show="selectedIndex === -1" class="view-list">
-          <div class="list-header">
+          <div class="list-header page-exit-item" style="--exit-order: 0;">
             <h3 class="projects-title">Projects</h3>
             <p class="projects-subtitle">Ongoing Development Logs</p>
           </div>
@@ -24,8 +24,8 @@
             <div 
               v-for="(proj, i) in (selectedIndex === -1 ? projects : [])" 
               :key="proj.title" 
-              class="project-row group"
-              :style="{ '--i': i }"
+              class="project-row group page-exit-item"
+              :style="{ '--i': i, '--exit-order': i + 1 }"
               @click="selectProject(i)"
             >
               <div class="row-left">
@@ -71,20 +71,17 @@
             <div class="right-indicator">
                 <div class="indicator-group-custom">
                    <div class="digit-row">
-                       <!-- Digit 0: Cut 50% -->
-                       <div class="digit-box">
+                       <!-- Digit 0: Cut 50% by overflow -->
+                       <div class="digit-clip-box clip-half">
                            <span class="idx-digit stagger-exit e-1">0</span>
-                           <div class="cut-mask-half">
-                               <span class="txt-proj stagger-exit e-2">PROJ</span>
-                           </div>
                        </div>
-                       <!-- Digit N: Cut ~20% -->
-                       <div class="digit-box">
+                       <!-- Digit N: Cut ~20% by overflow -->
+                       <div class="digit-clip-box clip-small">
                            <span class="idx-digit stagger-exit e-1">{{ selectedIndex + 1 }}</span>
-                           <div class="cut-mask-small"></div>
                        </div>
                    </div>
-                   <!-- Bottom Info -->
+                   <!-- Text below digits -->
+                   <div class="txt-proj stagger-exit e-2">PROJ</div>
                    <div class="txt-info stagger-exit e-2">INFORMATION</div>
                 </div>
             </div>
@@ -125,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { usePixiApp } from '@/composables/usePixiApp';
 
 // Asset Imports
@@ -338,6 +335,17 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   background: transparent; /* MainLayout handles background */
+}
+
+/* Page exit stagger animation */
+.page-exit-item {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition-delay: calc(var(--exit-order) * 0.1s);
+}
+
+.projects-container.page-leaving .page-exit-item {
+  opacity: 0;
+  transform: translateY(-30px);
 }
 
 /* --- Pixi Layer --- */
@@ -587,71 +595,55 @@ onUnmounted(() => {
 
 .digit-row {
   display: flex;
-  align-items: flex-end; /* Align bottom of digits */
+  align-items: flex-end;
   line-height: 1;
+  margin-bottom: 5px;
 }
 
-.digit-box {
+/* Clip containers for digits - use overflow to cut from bottom */
+.digit-clip-box {
+  overflow: hidden; /* Cut the digit */
   position: relative;
-  display: flex;
-  flex-direction: column;
+}
+
+/* Both digits same height for alignment */
+.clip-half {
+  height: 80px;
+}
+
+.clip-small {
+  height: 80px;
 }
 
 .idx-digit {
-  font-size: 150px; /* Reduced from 180px */
+  font-size: 150px;
   font-weight: 900;
   color: #22d3ee;
-  line-height: 0.8;
+  line-height: 0.8; /* 150 * 0.8 = 120px actual height */
   letter-spacing: -0.05em;
   font-family: 'Arial Black', sans-serif;
   display: block;
-}
-
-/* Mask for '0' - 50% height */
-.cut-mask-half {
-  position: absolute;
-  bottom: 0;
-  left: -10%; /* Extend to cover edges */
-  width: 120%; /* Extend width */
-  height: 52%; 
-  background: #000; 
-  z-index: 2;
-  display: flex;
-  align-items: flex-start; 
-  padding-top: 6px; /* Reduced padding to bring PROJ up slightly if needed */
-  padding-left: 10px; /* Indent slightly */
-  overflow: hidden;
-}
-
-/* Mask for 'N' - 20% height */
-.cut-mask-small {
-  position: absolute;
-  bottom: 0;
-  left: -10%;
-  width: 120%;
-  height: 20%;
-  background: #000;
-  z-index: 2;
+  position: relative;
+  top: 0;
 }
 
 .txt-proj {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: rgba(255,255,255,0.9);
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  margin-left: 8px;
+  margin-bottom: 2px;
 }
 
 .txt-info {
-  font-size: 18px; 
+  font-size: 15px;
   font-weight: 700;
   color: rgba(255,255,255,0.95);
   text-transform: uppercase;
   letter-spacing: 0.15em;
-  margin-top: -12px; /* Pull tighter to the PROJ line */
-  margin-left: 5px; 
-  position: relative;
-  z-index: 3;
+  margin-left: 8px;
 }
 
 /* Delays Enter: Target the separated digits */

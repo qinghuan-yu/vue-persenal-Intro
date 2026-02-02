@@ -57,8 +57,7 @@
         <transition 
           name="parallax" 
           mode="out-in"
-          @before-enter="(el) => console.log('Transition Start:', el)"
-          @enter="(el) => console.log('Transition Enter:', el)"
+          @before-leave="onBeforeLeave"
         >
           <component :is="Component" :key="route.fullPath" />
         </transition>
@@ -107,6 +106,11 @@ const navigate = (path) => {
   setTimeout(() => {
     isNavigating = false;
   }, 1000); // Debounce duration matching transition time
+};
+
+const onBeforeLeave = (el) => {
+  // Add page-leaving class to trigger stagger exit animation
+  el.classList.add('page-leaving');
 };
 
 onMounted(() => {
