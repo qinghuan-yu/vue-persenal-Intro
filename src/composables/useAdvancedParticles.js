@@ -15,6 +15,7 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
 
 // 移动端降级配置：减少粒子数
 const PARTICLE_COUNT = isMobile ? 4000 : 8000; 
+const MIN_PARTICLES = isMobile ? 500 : 1500; // Minimum particles for adaptive quality
 
 // 粒子尺寸（稍微调大，以适应拉大的间距）
 const PARTICLE_SIZE_MIN = isMobile ? 1.0 : 1.5;
@@ -242,6 +243,21 @@ export function useAdvancedParticles(app) {
     const offscreenCanvas = document.createElement('canvas');
     const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
 
+    // --- Performance: Adaptive Quality ---
+    let frameCount = 0;
+    let lowFpsCount = 0;
+
+    function reduceParticles() {
+        const currentCount = particles.length;
+        if (currentCount > MIN_PARTICLES) {
+            const removeCount = Math.floor(currentCount * 0.2);
+            // Splice removes from index, count. Removing from end is efficiently safer for rendering loop if running? 
+            // Actually JS array splice is synchronous.
+            particles.splice(currentCount - removeCount, removeCount); 
+            console.warn(`[Performance] Low FPS detected. Reduced particles to: ${particles.length}`);
+        }
+    }
+
     // --- 交互事件处理 ---
     function handleMouseMove(e) {
         if (!app.canvas) return;
@@ -258,6 +274,22 @@ export function useAdvancedParticles(app) {
     // --- 统一动画循环 ---
     function animate() {
         graphics.clear();
+        
+        // --- 性能监控 (每一秒检查一次) ---
+        frameCount++;
+        if (frameCount % 60 === 0) {
+            const fps = app.ticker.FPS;
+            if (fps < 45) {
+                lowFpsCount++;
+                if (lowFpsCount > 2) {
+                    reduceParticles();
+                    lowFpsCount = 0;
+                }
+            } else {
+                lowFpsCount = 0;
+            }
+        }
+
         const w = app.screen.width;
         const h = app.screen.height;
 

@@ -4,7 +4,7 @@
     <div class="layer-content">
       <div class="identity-wrapper">
         <!-- 1. Title Group (First) -->
-        <h1 class="main-title stagger-item" style="--i: 1;">I am Relic<br><span class="blue-text">I am Ark</span></h1>
+        <h1 class="main-title stagger-item" style="--i: 1;"><span class="relic-text">I am Relic</span><br><span class="blue-text">I am Ark</span></h1>
 
         <!-- 2. Profile Tag & Details (Second) -->
         <div class="profile-header stagger-item" style="--i: 8;">
@@ -18,7 +18,7 @@
               <div class="icon-wrap">[MONITOR]</div>
               <div>
                 <p class="detail-sub">Status / Objective</p>
-                <p class="detail-main">JUFE Sophomore / Kaggle Prepare</p>
+                <p class="detail-main">JUFE Sophomore / Kaggle Preparing</p>
               </div>
             </div>
             
@@ -26,7 +26,7 @@
               <div class="icon-wrap">[MUSIC]</div>
               <div>
                 <p class="detail-sub">Artist IN</p>
-                <p class="detail-main">Animenz-Style Pianist / JPOP Producer</p>
+                <p class="detail-main">Animenz-Style-Pianist</p>
               </div>
             </div>
           </div>
@@ -73,6 +73,11 @@ onMounted(() => {
 <style scoped>
 .blue-text {
   color: #22d3ee;
+}
+
+.relic-text {
+  color: #888888;
+  font-weight: 100;
 }
 
 .identity-container {
@@ -211,6 +216,7 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 500;
   margin-top: 4px;
+  min-width: 85px; /* Ensure alignment between items */
 }
 
 .detail-sub {

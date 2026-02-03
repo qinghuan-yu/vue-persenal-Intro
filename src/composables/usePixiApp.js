@@ -45,6 +45,7 @@ export function usePixiApp() {
         resizeTo: container,
         antialias: true,
         preference: 'webgl',
+        powerPreference: 'high-performance', // Request high-performance GPU
       });
 
       container.appendChild(app.canvas);
