@@ -47,9 +47,6 @@
             @before-enter="onSwitchBeforeEnter"
             @enter="onSwitchEnter"
             @after-enter="onSwitchAfterEnter"
-            @before-leave="onSwitchBeforeLeave"
-            @leave="onSwitchLeave"
-            @after-leave="onSwitchAfterLeave"
         >
           <!-- Wrapper keyed by project to force re-render transition -->
           <div :key="currentProject.title" class="switch-container">
@@ -218,29 +215,23 @@ const onBottomBarBeforeLeave = (el) => {};
 const onBottomBarLeave = (el) => {};
 const onBottomBarAfterLeave = (el) => {};
 
-// --- Debug Hooks for Project Switch ---
+// Force Reflow for Project Switch Animation
+// Without this, the browser might batch the start/end styles causing a flash/jump
+
 const onSwitchBeforeEnter = (el) => {
-    console.log('[ProjectSwitch] Before Enter', el);
-    console.log('Class List:', el.classList);
-    // Explicitly check for absolute positioning
-    console.log('Computed Style Position:', getComputedStyle(el).position);
+    // Force reflow to ensure transition starts from 'enter-from' state
+    void el.offsetHeight; 
 };
-const onSwitchEnter = (el, done) => {
-    console.log('[ProjectSwitch] Enter Active', el);
-    // don't call done(); CSS transition handles it automatically unless :css="false"
+
+const onSwitchEnter = (el) => {
+    // Release opacity control to CSS
+    el.style.opacity = '';
+    // Ensure reflow again
+    void el.offsetHeight;
 };
+
 const onSwitchAfterEnter = (el) => {
-    console.log('[ProjectSwitch] After Enter (Transition Complete)', el);
-};
-const onSwitchBeforeLeave = (el) => {
-    console.log('[ProjectSwitch] Before Leave', el);
-    console.log('Leaving Element Position:', getComputedStyle(el).position);
-};
-const onSwitchLeave = (el, done) => {
-    console.log('[ProjectSwitch] Leave Active', el);
-};
-const onSwitchAfterLeave = (el) => {
-    console.log('[ProjectSwitch] After Leave (Element Removed)', el);
+    // Transition Finished
 };
 
 // --- Lifecycle ---
@@ -317,7 +308,9 @@ onUnmounted(() => {
 
 /* Stagger Animations for Project Detail Entering */
 .project-switch-enter-active {
-    transition: all 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Duration increased to 3.0s to ensure all child transitions (max 2.8s) complete before class removal */
+    /* We split opacity to keep the fade-in relatively fast (1.8s) while keeping the transition active via transform */
+    transition: opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1), transform 3.0s linear;
 }
 .project-switch-leave-active {
     transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
@@ -330,27 +323,26 @@ onUnmounted(() => {
 }
 
 /* Entering Elements (Detail) */
-/* REMOVED default opacity/transform from .stagger-item to fix exit glitches */
-/* .stagger-item {} (Empry rule removed) */
-
-/* Apply Enter Animation ONLY when parent is entering */
-.project-switch-enter-active .stagger-item {
-    opacity: 0;
-    transform: translateY(40px); /* Increased start distance */
-    animation: simple-fade-up 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+/* Force GPU layer promotion to avoid subpixel layout shifts */
+.stagger-item {
+    transform: translate3d(0,0,0);
+    will-change: transform, opacity;
+    opacity: 1;
+    transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* --- Enter Delays --- */
-/* Layer 1: Top (Title/Subtitle/Line) - Starts fast */
-.project-switch-enter-active .stagger-item.l-1 { animation-delay: 0.8s; } 
+/* Apply Enter Animation ONLY when parent is entering */
+/* We use Transitions now instead of Animation to prevent layout snaps when class is removed */
+.project-switch-enter-from .stagger-item {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0); 
+}
 
-/* Layer 2: Bottom (Desc/Button) - Starts later */
-.project-switch-enter-active .stagger-item.l-2 { animation-delay: 1.1s; }
-
-/* Layer 3: Right Index - Starts last */
-.project-switch-enter-active .stagger-item.l-3 { animation-delay: 1.4s; }
-/* Removed duplicate rule */
-
+/* The active state just waits for the transition to finish. 
+   We maintain specific delays. */
+.project-switch-enter-active .stagger-item.l-1 { transition-delay: 0.8s; } 
+.project-switch-enter-active .stagger-item.l-2 { transition-delay: 1.1s; } 
+.project-switch-enter-active .stagger-item.l-3 { transition-delay: 1.4s; }
 
 /* --- Exit Transitions & Delays --- */
 /* We target the leave-active state where Vue keeps the element in DOM */
@@ -396,9 +388,7 @@ onUnmounted(() => {
 .project-switch-leave-active .e-3 { transition-delay: 0.3s; }
 
 
-@keyframes simple-fade-up {
-    to { opacity: 1; transform: translateY(0); }
-}
+/* Removed unused keyframes simple-fade-up */
 
 .projects-container {
   min-height: 100vh;
@@ -885,16 +875,7 @@ onUnmounted(() => {
 }
 
 /* Project Switch Parallax (Internal Toggle) */
-.project-switch-enter-active {
-  transition: all 1.0s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 
-   CRITICAL FIX: 
-   Container must NOT fade out immediately. 
-   We delay the container's fade out to allow children to stagger out first.
-   Container waits 0.8s (covering max child delay 0.2s + duration 0.5s), then instantly fades.
-*/
+/* .project-switch-enter-active declared above, removing duplicate/conflicting block */
 .project-switch-enter-to,
 .project-switch-leave-from {
   opacity: 1;

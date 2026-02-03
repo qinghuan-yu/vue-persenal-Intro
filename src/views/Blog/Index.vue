@@ -275,6 +275,12 @@ const currentPostContent = computed(() => {
   font-weight: 400;
 }
 
+.ak-list-item:hover .item-subtitle-en,
+.ak-list-item.active .item-subtitle-en {
+  /* color styles removed to default */
+   color: inherit;
+}
+
 .item-separator {
   width: 100%;
   height: 1px;
@@ -490,10 +496,11 @@ const currentPostContent = computed(() => {
 .markdown-scroll-wrapper::-webkit-scrollbar-thumb {
   background: rgba(34, 211, 238, 0.3); /* Cyan thumb */
   border-radius: 3px;
-  transition: background 0.3s;
+  transition: all 0.3s;
 }
 
 .markdown-scroll-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 211, 238, 0.6); /* Brighter hover */
+  background: #22d3ee; /* Brighter hover */
+  box-shadow: 0 0 10px #22d3ee; /* Glowing effect */
 }
 </style>
