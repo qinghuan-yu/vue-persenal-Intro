@@ -10,7 +10,7 @@
       <transition name="list-section">
       <div v-show="selectedIndex === -1" class="view-list">
           <div class="list-header page-exit-item" style="--exit-order: 0;">
-            <h3 class="projects-title">Projects</h3>
+            <h3 class="projects-title">Projekts</h3>
             <p class="projects-subtitle">Ongoing Development Logs</p>
           </div>
 
