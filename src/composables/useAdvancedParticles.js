@@ -1,4 +1,4 @@
-import { Graphics } from 'pixi.js';
+import { Container, Sprite, ParticleContainer, Texture, Graphics, Particle as PixiParticle, Application } from 'pixi.js';
 
 /*
     useAdvancedParticles
@@ -228,9 +228,32 @@ class Particle {
 
 
 export function useAdvancedParticles(app) {
-    const graphics = new Graphics();
+    // ❌ 删除：const graphics = new Graphics();
+    
+    // ✅ 新增：使用高性能粒子容器 (Pixi v8 适配)
+    const particleContainer = new ParticleContainer({
+        dynamicProperties: {
+            position: true,
+            rotation: false, 
+            uvs: false,
+            color: true,      // 支持 tint 和 alpha
+            vertex: true      // 开启 vertex 以支持 scale 变化
+        }
+    });
+
     const particles = [];
-    let state = 'SCATTER'; // Default state is SCATTER now
+    let state = 'SCATTER'; 
+    let circleTexture = null; // 存储生成的纹理
+
+    // --- 辅助：生成一个圆形的纹理 ---
+    function createCircleTexture() {
+        const gr = new Graphics();
+        gr.circle(0, 0, 4); // 画一个基础大小的圆
+        gr.fill(0xFFFFFF);  // 纯白，方便后续 tint 染色
+        const texture = app.renderer.generateTexture(gr);
+        gr.destroy(); // 销毁临时画笔
+        return texture;
+    }
 
     
     // 动画计时器
@@ -251,9 +274,18 @@ export function useAdvancedParticles(app) {
         const currentCount = particles.length;
         if (currentCount > MIN_PARTICLES) {
             const removeCount = Math.floor(currentCount * 0.2);
-            // Splice removes from index, count. Removing from end is efficiently safer for rendering loop if running? 
-            // Actually JS array splice is synchronous.
-            particles.splice(currentCount - removeCount, removeCount); 
+            
+            // Remove logic particles and corresponding sprites
+            const removed = particles.splice(currentCount - removeCount, removeCount);
+            removed.forEach(p => {
+                if (p.sprite) {
+                    particleContainer.removeParticle(p.sprite); // ⚠️ reduceParticles: removeChild Changed to removeParticle
+                    // p.sprite.destroy(); // v8 PixiParticle 不一定有 destroy 方法且由容器管理？
+                    // PixiParticle 是 JS 对象，直接解除引用即可。
+                    p.sprite = null;
+                }
+            });
+
             console.warn(`[Performance] Low FPS detected. Reduced particles to: ${particles.length}`);
         }
     }
@@ -271,9 +303,9 @@ export function useAdvancedParticles(app) {
         mouseY = -9999;
     }
 
-    // --- 统一动画循环 ---
+    // --- 统一动画循环 (极速版) ---
     function animate() {
-        graphics.clear();
+        // ❌ 删除：graphics.clear();
         
         // --- 性能监控 (每一秒检查一次) ---
         frameCount++;
@@ -296,29 +328,81 @@ export function useAdvancedParticles(app) {
         // State determines logic: MORPH (True) or SCATTER (False)
         const polymerizeFlag = (state === 'MORPH');
 
-        particles.forEach(p => {
-             // Unified Update
+        // 遍历更新
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            
+            // 1. 计算物理 (CPU)
             p.update(w, h, mouseX, mouseY, polymerizeFlag);
             
-            // Unified Render
+            // 2. 同步数据给 Sprite (GPU)
+            const sprite = p.sprite;
+            
             if (p.currentRenderAlpha > 0.01) {
-                graphics.circle(p.x, p.y, p.radius);
-                graphics.fill({ color: p.currentColor, alpha: p.currentRenderAlpha });
+                // v8 Particle 没有 visible 属性？
+                // 我们可以通过 alpha = 0 来隐藏，或者移除？
+                // 查看 Particle 定义：确实没有 visible, 它是 lightweight.
+                // 通常用 alpha = 0;
+                
+                sprite.x = p.x;
+                sprite.y = p.y;
+                sprite.alpha = p.currentRenderAlpha;
+                sprite.tint = p.currentColor; // 直接染色
+                
+                // 缩放控制粒子大小
+                // 你的 radius 大约是 1.5~2.2，纹理半径是 4，所以缩放比例大约是 0.4~0.5
+                const scale = p.radius / 4; 
+                sprite.scaleX = scale;
+                sprite.scaleY = scale;
+            } else {
+                sprite.alpha = 0;
             }
-        });
+        }
     }
 
     function init() {
-        app.stage.addChild(graphics);
+        // 1. 生成纹理
+        circleTexture = createCircleTexture();
+        
+        // 2. 添加容器到舞台
+        app.stage.addChild(particleContainer);
+
         startTime = performance.now();
         particles.length = 0;
         
         const w = app.screen.width;
         const h = app.screen.height;
         
-        // 初始化对象池
-        for(let i=0; i<PARTICLE_COUNT; i++) {
-            particles.push(new Particle(w, h));
+        // 3. 创建 PixiParticle 而不是 Sprite
+        for(let i=0; i < PARTICLE_COUNT; i++) {
+            // 创建粒子逻辑对象（你原来的类）
+            const p = new Particle(w, h);
+            
+            // 创建视觉对象（PixiParticle）
+            // 注意：Pixi v8 的 Particle 构造函数接受 options 对象
+            const sprite = new PixiParticle({
+                texture: circleTexture,
+                x: 0,
+                y: 0,
+                scaleX: 1,
+                scaleY: 1,
+                tint: 0xFFFFFF,
+                alpha: 0
+            });
+            
+            // v8 Particle 没有 anchor 属性？
+            // 查看定义：
+            // particle.anchorX = 0.5;
+            // particle.anchorY = 0.5;
+            sprite.anchorX = 0.5;
+            sprite.anchorY = 0.5;
+            
+            // 将 sprite 绑定到粒子对象上，方便更新
+            p.sprite = sprite; 
+            
+            // 加入集合
+            particles.push(p);
+            particleContainer.addParticle(sprite); // 使用 addParticle
         }
 
         // Use global window listener for mouse to ensure capture
@@ -331,8 +415,9 @@ export function useAdvancedParticles(app) {
         app.ticker.remove(animate);
         window.removeEventListener('mousemove', handleMouseMove);
         document.body.removeEventListener('mouseleave', handleMouseLeave);
-        app.stage.removeChild(graphics);
-        graphics.destroy();
+        app.stage.removeChild(particleContainer);
+        particleContainer.destroy();
+        if (circleTexture) circleTexture.destroy();
         particles.length = 0;
     }
     
