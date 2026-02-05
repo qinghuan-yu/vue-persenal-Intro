@@ -3,6 +3,14 @@
     <!-- Global Static Background -->
     <PixiBackground class="global-pixi-bg" />
     <div class="cross-grid-background"></div>
+    <div class="triangle-layer">
+       <div 
+         v-for="t in triangles" 
+         :key="t.id" 
+         class="floating-triangle"
+         :style="t.style"
+       ></div>
+    </div>
     <div class="scan-effect"></div>
 
     <!-- 顶部导航 -->
@@ -145,6 +153,38 @@ const indicatorPosition = computed(() => {
   if (path.includes('contact')) return '100%';
   return '0%';
 });
+
+// Generate random triangles for background
+const triangles = Array.from({ length: 30 }, (_, i) => {
+  const size = 3 + Math.random() * 20; 
+  const floatDuration = 18 + Math.random() * 20; 
+  const floatDelay = -Math.random() * 40; 
+  const left = Math.random() * 100;
+  
+  // Custom breathing/opacity behavior for each
+  const baseOpacity = 0.1 + Math.random() * 0.15;
+  const peakOpacity = baseOpacity + 0.3; // Increased breathing range
+
+  // Faster breathing cycle inside the movement (Sine wave simulation)
+  const pulseDuration = 2 + Math.random() * 4; 
+  const pulseDelay = -Math.random() * 10; // Random phase
+
+  return {
+    id: i,
+    style: {
+      left: `${left}%`,
+      width: `${size}px`,
+      height: `${size}px`,
+      // Use CSS variables so we can use animation shorthand in CSS
+      '--float-duration': `${floatDuration}s`,
+      '--float-delay': `${floatDelay}s`,
+      '--pulse-duration': `${pulseDuration}s`,
+      '--pulse-delay': `${pulseDelay}s`,
+      '--base-opacity': baseOpacity,
+      '--peak-opacity': peakOpacity
+    }
+  };
+});
 </script>
 
 <style>
@@ -195,6 +235,68 @@ const indicatorPosition = computed(() => {
   opacity: 0.15;
   background-image: radial-gradient(circle, rgba(97, 177, 214, 0.4) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+
+/* Triangle Layer */
+.triangle-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.floating-triangle {
+  position: absolute;
+  top: 110vh; /* Start below screen */
+  background: transparent;
+  width: 0;
+  height: 0;
+  
+  /* Solid Triangle using CSS Clip Path - Points Up naturally (50% 0%) */
+  background-color: rgba(200, 200, 200, 0.6); 
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  
+  /* Remove old background image settings */
+  background-image: none;
+  
+  /* Floating animation with independent timings */
+  animation: 
+    float-up var(--float-duration, 20s) linear infinite, 
+    breathe var(--pulse-duration, 4s) ease-in-out infinite;
+    
+  animation-delay: var(--float-delay, 0s), var(--pulse-delay, 0s);
+  
+  will-change: transform, opacity;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); 
+}
+
+/* Upward movement - strictly vertical */
+@keyframes float-up {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-130vh);
+  }
+}
+
+/* Independent breathing animation (Sine-like via ease-in-out) */
+@keyframes breathe {
+  0%, 100% {
+    opacity: var(--base-opacity, 0.1);
+  }
+  50% {
+    opacity: var(--peak-opacity, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-triangle {
+    animation: none;
+    top: 50%;
+    opacity: 0.1;
+  }
 }
 
 .scan-effect {

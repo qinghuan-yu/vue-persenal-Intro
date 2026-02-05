@@ -31,7 +31,10 @@
                 <span class="row-id">0{{ i + 1 }}</span>
                 <span class="row-type">{{ proj.type }}</span>
               </div>
-              <h4 class="row-title">{{ proj.title }}</h4>
+              <h4 class="row-title">
+                <span class="row-title-cn">{{ proj.title }}</span>
+                <span v-if="proj.descTitle" class="row-title-en">{{ proj.descTitle }}</span>
+              </h4>
               <div class="row-arrow">→</div>
             </div>
           </transition-group>
@@ -432,7 +435,7 @@ onUnmounted(() => {
 /* --- View 1: List Styles --- */
 .view-list {
   width: 100%;
-  max-width: 600px;
+  max-width: 450px; /* Reduced from 600px */
   position: relative; /* Ensure z-index works contextually */
   z-index: 20; 
 } 
@@ -499,11 +502,31 @@ onUnmounted(() => {
 
 .row-title {
   flex: 1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
   font-size: 18px;
   font-weight: 500;
   letter-spacing: 0.05em;
   margin: 0;
   text-transform: uppercase;
+}
+
+.row-title-cn {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.row-title-en {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  opacity: 0.55;
+  text-transform: uppercase;
+  transform: translateY(-1px);
 }
 
 .row-arrow {
