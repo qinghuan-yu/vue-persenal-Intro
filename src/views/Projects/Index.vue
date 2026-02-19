@@ -438,6 +438,12 @@ onUnmounted(() => {
   max-width: 450px; /* Reduced from 600px */
   position: relative; /* Ensure z-index works contextually */
   z-index: 20; 
+  /* Visual Adjustment: Use flex to position, but bias towards top */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center first */
+  padding-bottom: 25vh; /* Push content up by adding bottom padding */
+  height: 100%; 
 } 
 
 .projects-title {

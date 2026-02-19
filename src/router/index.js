@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.vue';
 import Identity from '../views/Identity/Index.vue';
 import Projects from '../views/Projects/Index.vue';
 import Blog from '../views/Blog/Index.vue';
+import Music from '../views/Music/Index.vue';
 import Contact from '../views/Contact/Index.vue';
 
 const routes = [
@@ -14,6 +15,7 @@ const routes = [
       { path: 'identity', component: Identity },
       { path: 'projects', component: Projects },
       { path: 'blog', component: Blog },
+      { path: 'music', component: Music },
       { path: 'contact', component: Contact },
     ],
   },
