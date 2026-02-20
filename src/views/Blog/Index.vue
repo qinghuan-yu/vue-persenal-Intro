@@ -66,7 +66,6 @@ const activePostId = ref(null);
 onMounted(() => {
   // Process imported modules
   const loadedPosts = [];
-  let index = 0;
   
   for (const path in modules) {
     const content = modules[path];
@@ -77,7 +76,6 @@ onMounted(() => {
     const displayDate = rawDate.replace(/-/g, ' / ').replace(/^(\d{4}) \/ /, '$1 // ');
     
     loadedPosts.push({
-      id: index++,
       title: titleMatch ? titleMatch[1] : 'Untitled Post',
       date: rawDate,
       displayDate: displayDate, // Formatted for the new list style
@@ -85,9 +83,19 @@ onMounted(() => {
       path: path
     });
   }
-  
-  posts.value = loadedPosts;
-  if(posts.value.length > 0) {
+
+  loadedPosts.sort((a, b) => {
+    const timeA = Date.parse(a.date) || 0;
+    const timeB = Date.parse(b.date) || 0;
+    return timeB - timeA; // Newest first
+  });
+
+  posts.value = loadedPosts.map((post, index) => ({
+    ...post,
+    id: index
+  }));
+
+  if (posts.value.length > 0) {
     selectPost(posts.value[0]);
   }
 });

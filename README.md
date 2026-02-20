@@ -27,4 +27,4 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ### Trying to stylize Arknights; resources will be replaced later. ~~If it turns out well... …~~
 
-### Some of the effects are based on https://github.com/QingXia-Ela/Ark-Particle-Imitate ###
+### Some of the effects are based on https://github.com/QingXia-Ela/Ark-Particle-Imitate and https://github.com/JIEJOE-WEB-Tutorial/017-audio-wave ###

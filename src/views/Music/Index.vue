@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 // 导入音乐文件 - 请确保路径正确
 import song1Url from '../../music/からっぽの星で.mp3?url';
@@ -85,7 +85,6 @@ const songs = [
 const currentSongIndex = ref(-1);
 const currentSong = ref(null);
 const isPlaying = ref(false);
-const isLoading = ref(false);
 
 // Audio Context & Logic
 let audioContext = null;
@@ -95,12 +94,11 @@ let startTime = 0;
 let pauseTime = 0; // 记录暂停时的位置
 
 // Visualizer Config
-const linesTotal = 200;
+const linesTotal = 100;
 const visualizerRef = ref(null);
 const lineRefs = ref([]);
 let wavesData = null;
 let animationFrameId = null;
-let visualizerTimer = null; // 用于替代原来的 setInterval
 
 // User's original logic adapted
 const getWavesData = async (buffer, segmentLength, points) => {
@@ -260,7 +258,6 @@ const runVisualizer = () => {
     // Using 0.3s (300ms) segments for analysis matches the setInterval.
     // We synchronize it with audio playback time.
     
-    // Interpolation for smoother effect
     const smoothUpdate = () => {
         if (!isPlaying.value || !wavesData) return;
         
@@ -290,7 +287,7 @@ const runVisualizer = () => {
                  const val = val1 + (val2 - val1) * progress;
                  
                  // Dynamic scaling
-                 const visualVal = Math.max(0, val * 5); 
+                 const visualVal = Math.max(0, val * 6); 
                  line.style.setProperty("--s", visualVal);
              }
         }
@@ -308,11 +305,11 @@ const stopVisualizer = () => {
 };
 
 onMounted(() => {
-    // Select first song by default and pre-load it WITHOUT playing
-    if (songs.length > 0) {
-        // Load the first song quietly so wavesData is ready
-        loadSong(0, false);
-    }
+  // Select first song by default and pre-load it WITHOUT playing
+  if (songs.length > 0) {
+    // Load the first song quietly so wavesData is ready
+    loadSong(0, false);
+  }
 });
 
 onUnmounted(() => {
@@ -586,17 +583,17 @@ onUnmounted(() => {
   /* Thinner lines: 0.4vmin -> 0.2vmin */
   width: 0.2vmin; 
   
-  /* Shorter length: 10vmin -> 6vmin */
-  height: 6vmin; 
+  /* Base length */
+  height: 8vmin; 
   
   background-color: var(--color-accent, #22d3ee); 
   
   /* Default transform for audio reactivity */
-  transform: scaleY(var(--s, 0)); /* Default 0 */
-  
-  transition: transform 0.3s ease; /* Matching snippet timing */
   /* Giving it a tiny base scale so it's visible as a ring initially */
   transform: scaleY(var(--s, 0.05)); 
+  
+  transition: transform 0.3s ease; /* Matching snippet timing */
+  
   /* Remove fancy effects */
   box-shadow: none;
   border-radius: 0;

@@ -495,7 +495,7 @@ onUnmounted(() => {
 }
 
 .row-id {
-  font-family: monospace;
+  font-family: 'Space Grotesk', monospace;
   color: #22d3ee;
   font-size: 12px;
 }

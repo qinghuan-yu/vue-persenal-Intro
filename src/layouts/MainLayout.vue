@@ -35,7 +35,7 @@
             <span class="item-sub">博客</span>
           </router-link>
           <router-link to="/music" class="nav-item">
-            <span class="item-label">PREVIEW</span>
+            <span class="item-label">MUSIC</span>
             <span class="item-sub">音乐</span>
           </router-link>
           <router-link to="/contact" class="nav-item">
