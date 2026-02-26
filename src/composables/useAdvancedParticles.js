@@ -613,72 +613,7 @@ export function useAdvancedParticles(app) {
             
             fillParticles(shape, tx, ty, VISUAL_SCALE);
 
-        } else if (qrShapes.length === 3) {
-             // === 3图片模式 (Contact Page) ===
-             // Music(Left), Mail(Center), Github(Right)
-             // 图标应该显示在对应文字上方
-             const scale = isMobile ? 0.8 : 1.0;
-             const gap = isMobile ? 150 : 300; // 水平间距
-             
-             // Y轴定位：稍微偏上，为底部文字留空间
-             const iconY = centerY - 80; // 图标中心位置，向上偏移80px
-             
-             // 1. Left (Music)
-             if (qrShapes[0]) {
-                 const shape = qrShapes[0];
-                 const dw = shape.width * scale;
-                 const dh = shape.height * scale;
-                 fillParticles(shape, centerX - gap - dw/2, iconY - dh/2, scale);
-             }
-             // 2. Center (Mail)
-             if (qrShapes[1]) {
-                 const shape = qrShapes[1];
-                 const dw = shape.width * scale;
-                 const dh = shape.height * scale;
-                 fillParticles(shape, centerX - dw/2, iconY - dh/2, scale);
-             }
-             // 3. Right (Github)
-             if (qrShapes[2]) {
-                 const shape = qrShapes[2];
-                 const dw = shape.width * scale;
-                 const dh = shape.height * scale;
-                 fillParticles(shape, centerX + gap - dw/2, iconY - dh/2, scale);
-             }
-
-        } else if (qrShapes.length >= 2) {
-            // === 双图片模式 (Keep for legacy compatibility if needed) ===
-            // A. 左侧
-
-            if (qrShapes[0] && !isMobile) {
-                const shape = qrShapes[0];
-                const displayW = shape.width * VISUAL_SCALE;
-                const displayH = shape.height * VISUAL_SCALE;
-                const tx = centerX - (cardWidth / 2) - cardMargin - displayW;
-                const ty = centerY - (displayH / 2) + qrVerticalOffset;
-                fillParticles(shape, tx, ty, VISUAL_SCALE);
-            }
-
-            // B. 右侧二维码（WeChat）
-            if (qrShapes[1] && !isMobile) {
-                const shape = qrShapes[1];
-                const displayH = shape.height * VISUAL_SCALE;
-                const tx = centerX + (cardWidth / 2) + cardMargin;
-                const ty = centerY - (displayH / 2) + qrVerticalOffset;
-                fillParticles(shape, tx, ty, VISUAL_SCALE);
-            }
-        }
-
-        // C. 底部文字（通用）
-        if (textShapes[0]) {
-            const shape = textShapes[0];
-            // 文字保持原比例或稍微放大
-            const textScale = isMobile ? 0.8 : 1.0; 
-            const displayW = shape.width * textScale;
-            
-            const tx = centerX - (displayW / 2);
-            const ty = centerY + textBottomOffset;
-            fillParticles(shape, tx, ty, textScale);
-        }
+        } 
 
         function fillParticles(shape, startX, startY, scale) {
             shuffleArray(shape.points);

@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <!-- Global Static Background -->
-    <PixiBackground class="global-pixi-bg" />
+    <PixiBackground v-if="route.path !== '/contact'" class="global-pixi-bg" />
     <div class="cross-grid-background"></div>
     <div class="triangle-layer">
        <div 

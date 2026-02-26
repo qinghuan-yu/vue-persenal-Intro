@@ -53,12 +53,8 @@ const updateParticlesByRoute = async (path) => {
       { source: ASSETS.PROJ_MAIN, options: { ...commonOptions, layoutX: 0.75 } }
     ]);
   } else if (path.includes('contact')) {
-    // Contact 页面：显示三个图标
-    await morphToShapes([
-      { source: ASSETS.ICON_MUSIC, options: { ...commonOptions, sampleRate: 3 } },
-      { source: ASSETS.ICON_MAIL, options: { ...commonOptions, sampleRate: 3 } },
-      { source: ASSETS.ICON_GITHUB, options: { ...commonOptions, sampleRate: 3 } }
-    ]);
+    // Contact 页面：散点模式
+    await morphToShapes([]);
   } else if (path.includes('blog')) {
     // Blog 页面：散点模式
     await morphToShapes([]);
