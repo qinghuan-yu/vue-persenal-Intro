@@ -1,7 +1,10 @@
 <template>
   <div class="app-container">
     <!-- Global Static Background -->
-    <PixiBackground v-if="route.path !== '/contact'" class="global-pixi-bg" />
+    <!-- 使用 transition 包裹 PixiBackground 并设置 mode="out-in" 或默认 -->
+    <transition name="pixi-fade">
+      <PixiBackground v-if="route.path !== '/contact'" class="global-pixi-bg" />
+    </transition>
     <div class="cross-grid-background"></div>
     <div class="triangle-layer">
        <div 
@@ -200,13 +203,24 @@ onMounted(() => {
 </script>
 
 <style>
+/* 全局样式，控制 Pixi 背景切换动画 */
+.pixi-fade-enter-active,
+.pixi-fade-leave-active {
+  transition: opacity 1s ease;
+}
+
+.pixi-fade-enter-from,
+.pixi-fade-leave-to {
+  opacity: 0;
+}
+
 .global-pixi-bg {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 0; /* Base layer */
+  z-index: 0;
   pointer-events: none;
 }
 </style>

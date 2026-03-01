@@ -140,6 +140,7 @@ class Particle {
         }
 
         // --- 2. 物理积分 ---
+
         // Ref: let finalX = ((... * Drag) + ((this.orx - this.x) * Ease) / 400
         // 我们将 "Drag" 视为外部力衰减，"Ease" 视为归位弹力
         
@@ -524,22 +525,39 @@ export function useAdvancedParticles(app) {
         const w = app.screen.width;
         const h = app.screen.height;
 
-        // Check if this is a transition between shapes (already in MORPH state)
-        // Used to trigger the Parallax Dispersion effect
-        const isTransition = (state === 'MORPH');
-
         // 1. 恢复到网络状态（传入空 configs 时切回 NETWORK -> SCATTER）
         if (!configs || configs.length === 0) {
             if (state === 'SCATTER') return; 
+            
+            // 关键修改：检查是否是从 MORPH 切换回 SCATTER
+            // Contact 页面也是 SCATTER 模式，但要求无逸散效果 (直接切回原位)
+            // 我们可以通过一个简单的全局标记或额外的 config 参数来控制是否触发 scatter 动画
+            // 现在简化逻辑：只要切回 SCATTER，就默认不做爆炸式逸散，而是平滑归位
+
             state = 'SCATTER';
-            // Trigger Scatter Physics
-            for (const p of particles) {
-                if(p.visible) p.scatter(w, h);
-            }
+            
+            // 老的逻辑： Trigger Scatter Physics
+            // for (const p of particles) {
+            //     if(p.visible) p.scatter(w, h);
+            // }
+            
+            // 新的逻辑：不强制重置 p.orx/ory，让它们自然飞回初始位置
+            // 这样就没有那个“爆炸”的瞬时动作了，看起来更平静
             return;
         }
 
+        const isTransition = (state === 'MORPH');
         state = 'MORPH';
+        
+        // 如果是从一个 Morph 切换到另一个 Morph (如 Projects 里的 tab 切换)，
+        // 则可以让当前粒子先 scatter 一下增加动感
+        if (isTransition) {
+             for (const p of particles) {
+                if(p.visible && Math.random() > 0.5) {
+                    p.scatter(w, h); // 半数粒子散开重组
+                }
+            }
+        }
         
         // --- 核心配置：视觉缩放倍率 ---
         // 原图是 200x200，设为 1.8 则屏幕实际显示 360x360 像素

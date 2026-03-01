@@ -1,17 +1,24 @@
 <template>
   <section class="identity-container" ref="containerRef">
-    <transition name="fade">
-      <div v-if="isLoading" class="loading-overlay">
-        <div class="loading-content">
-          <div class="progress-bar-track">
-            <div class="progress-bar-fill" :style="{ width: progress + '%' }"></div>
+    <Teleport to="body">
+      <!-- 移除复杂的事件监听，改回基础的 v-if 和 CSS transition -->
+      <transition name="fade">
+        <div v-if="isLoading" class="loading-overlay">
+          <div class="loading-content">
+            <div class="progress-bar-track">
+              <!-- 移除 transitionend，改由 JS 定时控制 -->
+              <div class="progress-bar-fill" :style="{ width: progress + '%' }"></div>
+            </div>
+            <!-- Optional: Loading Text -->
           </div>
         </div>
-      </div>
-    </transition>
+      </transition>
+    </Teleport>
+
 
     <!-- Content Layer -->
-    <div class="layer-content" :class="{ 'content-hidden': isLoading }">
+    <!-- 移除 :class="{ 'content-hidden': isLoading }"，我们利用 stagger-item 的默认隐藏特性 -->
+    <div class="layer-content">
       <div class="identity-wrapper">
         <!-- 1. Title Group (First) -->
         <h1 class="main-title stagger-item" style="--i: 1;"><span class="relic-text">I am Relic</span><br><span
@@ -55,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { preloadResources } from '@/utils/resourceLoader';
 import { hasInitialLoaded } from '@/utils/globalState';
 
@@ -68,85 +75,112 @@ import contactGame from '@/views/Contact/game.png';
 import contactVinyl from '@/views/Contact/vinyl.png';
 import contactLetter from '@/views/Contact/letter.png';
 
-const isLoading = ref(!hasInitialLoaded.value);
+// 状态控制
+const isLoading = ref(false); // 默认为 false，由逻辑决定是否开启
 const progress = ref(0);
 const containerRef = ref(null);
 
-// 定义资源清单 (请替换为你项目中真实的路径)
+// 定义资源清单
 const resources = [
-  // 关键图片 - Preload Contact Page Images
   { type: 'image', url: contactBackscene },
   { type: 'image', url: contactGithubIcon },
   { type: 'image', url: contactDesktop },
   { type: 'image', url: contactGame },
   { type: 'image', url: contactVinyl },
   { type: 'image', url: contactLetter },
-
-  // 关键音频 (预加载这些可以让播放时不卡顿)
-  // { type: 'audio', url: '/music/song1.mp3' }, 
-
-  // 关键页面组件 (路由预热)
   { type: 'component', importFn: () => import('@/views/Projects/Index.vue') },
   { type: 'component', importFn: () => import('@/views/Blog/Index.vue') },
   { type: 'component', importFn: () => import('@/views/Music/Index.vue') },
   { type: 'component', importFn: () => import('@/views/Contact/Index.vue') },
-
-  // 占位符 (为了演示效果，如果资源很少，进度条太快，可以加几个占位)
   { type: 'dummy' }, { type: 'dummy' }, { type: 'dummy' }
 ];
 
+/* 
+ * 核心逻辑：触发进场动画
+ * 给容器添加 .animate-entry 类，CSS 会负责后续的 stagger 动画
+ */
+const triggerEntranceAnimation = () => {
+  const container = containerRef.value;
+  if (container) {
+    // 再次强制确保没有这个类，防抖
+    container.classList.remove('animate-entry');
+    
+    // 强制重绘 (Reflow)
+    void container.offsetWidth; 
+
+    requestAnimationFrame(() => {
+      container.classList.add('animate-entry');
+    });
+  }
+};
+
 onMounted(async () => {
   const container = containerRef.value;
-
-  // 每次进入先清理旧的动画类名，确保视差动画可以重新触发
+  // 初始化：绝对禁止在 Loading 期间出现动画类
   if (container) {
     container.classList.remove('animate-entry');
   }
 
-  // 逻辑分流：判断是否是初次加载网站
+  // === 路径 A：首次访问网站 ===
   if (!hasInitialLoaded.value) {
-    // 场景 A：初次进入，执行完整加载流程
     isLoading.value = true;
     progress.value = 0;
 
+    // 记录开始时间，用于计算最小停留时间
+    const startTime = Date.now();
+
     try {
-      // 执行真实预加载
       await preloadResources(resources, (p) => {
+        // 为了视觉平滑，我们可以限制更新频率，或者直接更新
         progress.value = p;
       });
 
-      // 加载完成，稍作停留展示 100%
+      // 计算已经消耗的时间
+      const elapsed = Date.now() - startTime;
+      const minLoadTime = 1200; // 至少加载 1.2 秒
+      const remainingTime = Math.max(0, minLoadTime - elapsed);
+
+      // 如果加载太快，强行等待剩余时间，让进度条慢慢走
+      if (remainingTime > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
+
+      // 强制进度条跑满
+      progress.value = 100;
+
+      // 关键：给足够的时间 (1秒) 让 CSS transition (0.2s) 跑完，并且让用户看清“100%”这个状态
+      // 不要急着关掉
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 关闭遮罩
+      isLoading.value = false;
+      hasInitialLoaded.value = true;
+
+      // 确保遮罩完全消失（CSS fade Out 0.6s）后再执行动画
+      // 保持 0.8s 的缓冲
       setTimeout(() => {
-        finishLoading(true);
-      }, 500);
+        triggerEntranceAnimation();
+      }, 800);
 
     } catch (e) {
-      console.error("Loading failed", e);
-      finishLoading(true); // 出错也要进系统
+      console.error("Loading error", e);
+      isLoading.value = false;
+      hasInitialLoaded.value = true;
+      triggerEntranceAnimation();
     }
-  } else {
-    // 场景 B：从其他页面切回来
-    // 直接跳过预加载，直接触发进场动画
-    finishLoading(false);
+  } 
+  
+  // === 路径 B：后续访问 ===
+  else {
+    isLoading.value = false; 
+    
+    setTimeout(() => {
+      triggerEntranceAnimation();
+    }, 100);
   }
 });
 
-function finishLoading(isFirstTime) {
-  const container = containerRef.value;
-
-  if (isFirstTime) {
-    hasInitialLoaded.value = true; // 修改全局状态
-  }
-  
-  isLoading.value = false;
-  // sessionStorage.setItem('hasVisited', 'true'); // 不需要再记录
-  if (container) {
-    // 延迟一小会儿确保 DOM 更新后再添加动画类
-    setTimeout(() => {
-      container.classList.add('animate-entry');
-    }, 50);
-  }
-}
+// 不再需要旧的 complex event handlers
 </script>
 
 <style scoped>
@@ -160,17 +194,27 @@ function finishLoading(isFirstTime) {
 
 /* 新增：Loading 样式 */
 .loading-overlay {
-  position: absolute;
+  position: fixed; /* 改为 fixed 以确保相对于视口定位 */
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: #0a0a0a;
-  /* 与背景色一致 */
-  z-index: 100;
+  width: 100vw;
+  height: 100vh;
+  background: #050505; /* 确保背景完全不透明 */
+  z-index: 9999; /* 提高层级，超过 MainLayout 的 nav (z-index: 100) */
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* 添加 loading-text 样式 */
+.loading-text {
+  margin-top: 10px;
+  color: #22d3ee;
+  font-family: monospace;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.8;
+  letter-spacing: 1px;
 }
 
 /* Vue <transition> 的内置类名控制淡入淡出 */
