@@ -19,6 +19,9 @@ export const preloadResources = async (resources, onProgress) => {
         img.onload = onSuccess;
         img.onerror = onError;
       } 
+      else if (item.type === 'file') {
+        fetch(item.url).then(() => onSuccess()).catch(onError);
+      }
       else if (item.type === 'audio') {
         fetch(item.url).then(res => res.blob()).then(onSuccess).catch(onError);
       } 

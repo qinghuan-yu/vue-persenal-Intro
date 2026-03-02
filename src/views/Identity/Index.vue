@@ -64,14 +64,21 @@ import { ref, onMounted, nextTick } from 'vue';
 import { preloadResources } from '@/utils/resourceLoader';
 import { hasInitialLoaded } from '@/utils/globalState';
 
-// Preload Contact asset images
-// Assuming images are in src/views/Contact and using explicit relative paths
-import contactBackscene from '@/views/Contact/backscene.png';
-import contactGithubIcon from '@/views/Contact/githubicon.png';
-import contactDesktop from '@/views/Contact/desktop.png';
-import contactGame from '@/views/Contact/game.png';
-import contactVinyl from '@/views/Contact/vinyl.png';
-import contactLetter from '@/views/Contact/letter.png';
+const assetsFileUrls = Object.values(
+  import.meta.glob('/src/assets/**/*', {
+    eager: true,
+    query: '?url',
+    import: 'default'
+  })
+);
+
+const contactPngUrls = Object.values(
+  import.meta.glob('/src/views/Contact/*.png', {
+    eager: true,
+    query: '?url',
+    import: 'default'
+  })
+);
 
 // 状态控制
 const isLoading = ref(false); // 默认为 false，由逻辑决定是否开启
@@ -80,12 +87,8 @@ const containerRef = ref(null);
 
 // 定义资源清单
 const resources = [
-  { type: 'image', url: contactBackscene },
-  { type: 'image', url: contactGithubIcon },
-  { type: 'image', url: contactDesktop },
-  { type: 'image', url: contactGame },
-  { type: 'image', url: contactVinyl },
-  { type: 'image', url: contactLetter },
+  ...assetsFileUrls.map((url) => ({ type: 'file', url })),
+  ...contactPngUrls.map((url) => ({ type: 'image', url })),
   { type: 'component', importFn: () => import('@/views/Projects/Index.vue') },
   { type: 'component', importFn: () => import('@/views/Blog/Index.vue') },
   { type: 'component', importFn: () => import('@/views/Music/Index.vue') },
