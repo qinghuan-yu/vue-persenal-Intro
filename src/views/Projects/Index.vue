@@ -89,11 +89,11 @@
                    <div class="digit-row">
                        <!-- Digit 0: Cut 50% by overflow -->
                        <div class="digit-clip-box clip-half">
-                           <span class="idx-digit stagger-item l-3">0</span>
+                         <span class="idx-digit idx-half stagger-item l-3">0</span>
                        </div>
                        <!-- Digit N: Cut ~20% by overflow -->
                        <div class="digit-clip-box clip-small">
-                           <span class="idx-digit stagger-item l-3">{{ selectedIndex + 1 }}</span>
+                         <span class="idx-digit idx-small stagger-item l-3">{{ selectedIndex + 1 }}</span>
                        </div>
                    </div>
                    <!-- Text below digits -->
@@ -692,19 +692,18 @@ onUnmounted(() => {
   margin-bottom: 5px;
 }
 
-/* Clip containers for digits - use overflow to cut from bottom */
+/* Clip containers for digits - only for layout alignment */
 .digit-clip-box {
-  overflow: hidden; /* Cut the digit */
   position: relative;
 }
 
-/* Both digits same height for alignment */
+/* Keep the same row height for alignment */
 .clip-half {
-  height: 60px; /* Reduced from 80px to cut half of 100px font */
+  height: 60px;
 }
 
 .clip-small {
-  height: 60px; /* Cut bottom of second digit */
+  height: 60px;
 }
 
 .idx-digit {
@@ -716,7 +715,17 @@ onUnmounted(() => {
   font-family: 'Arial Black', sans-serif;
   display: block;
   position: relative;
-  top: 0; 
+  top: 0;
+  clip-path: inset(0 0 0 0);
+}
+
+/* Glyph-level clipping: clip the digit element itself */
+.idx-digit.idx-half {
+  clip-path: inset(0 0 25% 0);
+}
+
+.idx-digit.idx-small {
+  clip-path: inset(0 0 27% 0);
 }
 
 .txt-proj {
