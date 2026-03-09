@@ -83,7 +83,6 @@ const songs = [
 ];
 
 const currentSongIndex = ref(-1);
-const currentSong = ref(null);
 const isPlaying = ref(false);
 const isLoading = ref(false);
 
@@ -152,7 +151,6 @@ const loadSong = async (index, autoPlay = true) => {
   wavesData = null;
 
   currentSongIndex.value = index;
-  currentSong.value = songs[index];
   isLoading.value = true;
   
   try {
@@ -543,26 +541,7 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* --- Loader --- */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--color-accent, #22d3ee);
-  font-family: monospace;
-  font-size: 12px;
-  letter-spacing: 0.2em;
-}
-.loader {
-  border: 1px solid rgba(255,255,255,0.1);
-  border-top: 1px solid var(--color-accent, #22d3ee);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 16px;
-  box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
-}
+
 
 /* --- The Visualizer --- */
 .visualizer-fade-enter-active {
@@ -680,31 +659,6 @@ onUnmounted(() => {
 .icon-play { font-size: 24px; margin-left: 4px; } /* Optical center */
 .icon-pause { font-size: 20px; }
 
-.current-song-info {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
 
-.song-title-display {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: #fff;
-  margin: 0 0 4px 0;
-  text-shadow: 0 0 10px rgba(0,0,0,0.8);
-}
-
-.status-text {
-  font-size: 10px;
-  font-family: monospace;
-  color: var(--color-accent, #22d3ee);
-  letter-spacing: 0.2em;
-  opacity: 0.8;
-}
-
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes equalize { 0% { height: 2px; } 100% { height: 100%; } }
 </style>

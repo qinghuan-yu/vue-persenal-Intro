@@ -257,9 +257,6 @@ export function useAdvancedParticles(app) {
     }
 
     
-    // 动画计时器
-    let startTime = null;
-
     let mouseX = -9999;
     let mouseY = -9999;
     
@@ -368,7 +365,6 @@ export function useAdvancedParticles(app) {
         // 2. 添加容器到舞台
         app.stage.addChild(particleContainer);
 
-        startTime = performance.now();
         particles.length = 0;
         
         const w = app.screen.width;
@@ -595,17 +591,12 @@ export function useAdvancedParticles(app) {
         
         // --- 智能布局 (Smart Layout) ---
         const qrShapes = validShapes.filter(s => s.type === 'image');
-        const textShapes = validShapes.filter(s => s.type === 'text');
 
         let particleIndex = 0;
         const centerX = w / 2;
         const centerY = h / 2;
         
         // 布局参数
-        const cardWidth = 600;           // 信息框宽度
-        const cardMargin = 80;           // 信息框与二维码之间的间距
-        const qrVerticalOffset = 0;      // 二维码垂直偏移（0表示与信息框中心对齐）
-        const textBottomOffset = 220;    // 文字距离中心的下方距离
 
         if (qrShapes.length === 1) {
             // === 单图片模式 (Project Detail) ===

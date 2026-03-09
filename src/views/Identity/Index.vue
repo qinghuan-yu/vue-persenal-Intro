@@ -245,11 +245,6 @@ onMounted(async () => {
 }
 
 
-/* 控制内容显示的辅助类 */
-.content-hidden {
-  opacity: 0;
-}
-
 .identity-container {
   min-height: 80vh;
   height: 100%;
@@ -298,13 +293,6 @@ onMounted(async () => {
 /* Right Column (Signature) */
 .identity-container.animate-entry .signature-box.stagger-item {
   transition-delay: 1.1s !important;
-}
-
-/* ... existing styles ... */
-
-.identity-container.page-leaving .page-exit-item {
-  opacity: 0;
-  transform: translateY(-30px);
 }
 
 .layer-content {
@@ -459,20 +447,4 @@ onMounted(async () => {
   margin: 0;
 }
 
-.background-text {
-  position: absolute;
-  bottom: -5%;
-  right: 0;
-  pointer-events: none;
-  opacity: 0.03;
-  user-select: none;
-}
-
-.background-text h2 {
-  font-size: 25vw;
-  font-weight: 500;
-  font-style: normal;
-  line-height: 1;
-  margin: 0;
-}
 </style>
