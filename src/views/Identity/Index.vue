@@ -89,10 +89,6 @@ const containerRef = ref(null);
 const resources = [
   ...assetsFileUrls.map((url) => ({ type: 'file', url })),
   ...contactPngUrls.map((url) => ({ type: 'image', url })),
-  { type: 'component', importFn: () => import('@/views/Projects/Index.vue') },
-  { type: 'component', importFn: () => import('@/views/Blog/Index.vue') },
-  { type: 'component', importFn: () => import('@/views/Music/Index.vue') },
-  { type: 'component', importFn: () => import('@/views/Contact/Index.vue') },
   { type: 'dummy' }, { type: 'dummy' }, { type: 'dummy' }
 ];
 

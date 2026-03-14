@@ -48,9 +48,9 @@ const updateParticlesByRoute = async (path) => {
     // Identity 页面：散点模式
     await morphToShapes([]);
   } else if (path.includes('projects')) {
-    // Projects 页面：默认显示 PCB1 (pcbUrl) 在右侧 (0.75)，列表在左侧
+    // Projects 页面：默认显示 pcb.png 在右侧 (0.75)，列表在左侧
     await morphToShapes([
-      { source: ASSETS.PROJ_MAIN, options: { ...commonOptions, layoutX: 0.75 } }
+      { source: ASSETS.PCB_DETAIL, options: { ...commonOptions, layoutX: 0.75 } }
     ]);
   } else if (path.includes('contact')) {
     // Contact 页面：散点模式

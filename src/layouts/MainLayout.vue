@@ -1,24 +1,20 @@
 <template>
-  <div class="app-container">
-    <!-- Global Static Background -->
-    <!-- 使用 transition 包裹 PixiBackground 并设置 mode="out-in" 或默认 -->
+  <div class="app-container hide-scrollbar">
     <transition name="pixi-fade">
-      <PixiBackground v-if="route.path !== '/contact'" class="global-pixi-bg" />
+      <PixiBackground class="global-pixi-bg" />
     </transition>
+
     <div class="cross-grid-background"></div>
     <div class="triangle-layer">
-       <div 
-         v-for="t in triangles" 
-         :key="t.id" 
-         class="floating-triangle"
-         :style="t.style"
-       ></div>
+      <div
+        v-for="t in triangles"
+        :key="t.id"
+        class="floating-triangle"
+        :style="t.style"
+      ></div>
     </div>
     <div class="scan-effect"></div>
-    <!-- 点阵背景层：仅在聚光灯范围内显示 -->
-    <canvas ref="dotCanvas" class="dot-matrix" :style="dotMaskStyle"></canvas>
 
-    <!-- 顶部导航 -->
     <nav class="top-nav">
       <div class="nav-left">
         <div class="brand">
@@ -27,26 +23,16 @@
         </div>
         <div class="nav-divider"></div>
         <div class="nav-links">
-          <router-link to="/identity" class="nav-item">
-            <span class="item-label">IDENTITY</span>
-            <span class="item-sub">简介</span>
-          </router-link>
-          <router-link to="/projects" class="nav-item">
-            <span class="item-label">PROJECTS</span>
-            <span class="item-sub">项目</span>
-          </router-link>
-          <router-link to="/blog" class="nav-item">
-            <span class="item-label">BLOG</span>
-            <span class="item-sub">博客</span>
-          </router-link>
-          <router-link to="/music" class="nav-item">
-            <span class="item-label">MUSIC</span>
-            <span class="item-sub">音乐</span>
-          </router-link>
-          <router-link to="/contact" class="nav-item">
-             <span class="item-label">CONTACT</span>
-             <span class="item-sub">联系方式</span>
-          </router-link>
+          <button
+            v-for="item in navItems"
+            :key="item.key"
+            class="nav-item"
+            :class="{ active: activeSection === item.key }"
+            @click="scrollToSection(item.key)"
+          >
+            <span class="item-label">{{ item.label }}</span>
+            <span class="item-sub">{{ item.sub }}</span>
+          </button>
         </div>
       </div>
 
@@ -58,11 +44,10 @@
       </div>
     </nav>
 
-    <!-- 右侧进度条 -->
     <div class="right-sidebar">
       <div class="page-number">
         <transition name="num-slide" mode="out-in">
-          <span :key="currentPageIndex" class="current-num dark-cyan">{{ currentPageIndex }}</span>
+          <span :key="currentPageIndex" class="current-num">{{ currentPageIndex }}</span>
         </transition>
       </div>
       <div class="progress-track">
@@ -72,19 +57,54 @@
       </div>
     </div>
 
-    <!-- 主内容区 -->
     <main class="main-content">
-      <router-view v-slot="{ Component, route }">
-        <transition 
-          name="parallax" 
-          mode="out-in"
-          @before-leave="onBeforeLeave"
-        >
-          <div :key="route.fullPath" class="view-wrapper" :class="route.name">
-            <component :is="Component" />
-          </div>
-        </transition>
-      </router-view>
+      <ScrollVelocity text="CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // " :strength="28" />
+
+      <section id="section-identity" class="story-section" :class="sectionClass('identity')" :ref="setSectionRef('identity')">
+        <AnimatedContent :once="true" :threshold="0.25">
+          <Identity />
+        </AnimatedContent>
+      </section>
+
+      <div class="section-divider">
+        <ScrollVelocity text="ING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // " :strength="18" />
+      </div>
+
+      <section id="section-projects" class="story-section" :class="sectionClass('projects')" :ref="setSectionRef('projects')">
+        <AnimatedContent :once="true" :threshold="0.25">
+          <Projects />
+        </AnimatedContent>
+      </section>
+
+      <div class="section-divider">
+        <ScrollVelocity text="ING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // " :strength="18" />
+      </div>
+
+      <section id="section-blog" class="story-section" :class="sectionClass('blog')" :ref="setSectionRef('blog')">
+        <AnimatedContent :once="false" :threshold="0.2">
+          <Blog />
+        </AnimatedContent>
+      </section>
+
+      <div class="section-divider">
+        <ScrollVelocity text="ING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // " :strength="18" />
+      </div>
+
+      <section id="section-music" class="story-section" :class="sectionClass('music')" :ref="setSectionRef('music')">
+        <AnimatedContent :once="true" :threshold="0.25">
+          <Music />
+        </AnimatedContent>
+      </section>
+
+      <div class="section-divider">
+        <ScrollVelocity text="ING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // CONTINUOUS STORY // RELIC DATA HUB // KEEP SCROLLING // " :strength="18" />
+      </div>
+
+      <section id="section-contact" class="story-section" :class="sectionClass('contact')" :ref="setSectionRef('contact')">
+        <FadeContent :threshold="0.2">
+          <Contact />
+        </FadeContent>
+      </section>
     </main>
 
     <footer class="app-footer">
@@ -94,180 +114,478 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useLenis } from 'lenis/vue';
 import { useRoute, useRouter } from 'vue-router';
 import PixiBackground from '@/components/PixiBackground.vue';
+import AnimatedContent from '@/components/AnimatedContent.vue';
+import FadeContent from '@/components/FadeContent.vue';
+import ScrollVelocity from '@/components/ScrollVelocity.vue';
+import Identity from '@/views/Identity/Index.vue';
+import Projects from '@/views/Projects/Index.vue';
+import Blog from '@/views/Blog/Index.vue';
+import Music from '@/views/Music/Index.vue';
+import Contact from '@/views/Contact/Index.vue';
+
+const navItems = [
+  { key: 'identity', label: 'IDENTITY', sub: '简介' },
+  { key: 'projects', label: 'PROJECTS', sub: '项目' },
+  { key: 'blog', label: 'BLOG', sub: '博客' },
+  { key: 'music', label: 'MUSIC', sub: '音乐' },
+  { key: 'contact', label: 'CONTACT', sub: '联系方式' }
+];
+
+const activeSection = ref('identity');
+const focusSection = ref('identity');
+const sectionRefs = ref({});
+const triangles = ref([]);
+const projectsHardLock = ref(false);
 
 const route = useRoute();
 const router = useRouter();
+const lenisInstance = useLenis();
 
-const routesOrder = ['/identity', '/projects', '/blog', '/music', '/contact'];
+let sectionObserver = null;
+let isInternalRouteUpdate = false;
+let isSnapping = false;
+let snapCooldownTimer = null;
+let wheelAccumulator = 0;
+let pendingProjectsLockWhenSnapEnds = false;
+let projectsLockRetryTimer = null;
 
-let isNavigating = false;
+const PROJECTS_LOCK_DELTA_TOLERANCE = 6;
 
-const handleWheel = (e) => {
-  if (isNavigating) return;
-  
-  const currentPath = route.path;
-  const currentIndex = routesOrder.findIndex(p => currentPath.includes(p));
-  
-  if (currentIndex === -1) return;
+const isLockDebugEnabled = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
 
-  if (e.deltaY > 50) { // Scroll Down -> Next
-    if (currentIndex < routesOrder.length - 1) {
-      navigate(routesOrder[currentIndex + 1]);
+  const fromStorage = window.localStorage?.getItem('debugProjectsLock');
+  if (fromStorage === '1' || fromStorage === 'true') {
+    return true;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return params.get('lockDebug') === '1';
+};
+
+const pushLockDebug = (event, payload = {}) => {
+  if (!isLockDebugEnabled()) {
+    return;
+  }
+
+  const point = {
+    scope: 'MainLayout',
+    event,
+    ts: Date.now(),
+    path: route.path,
+    activeSection: activeSection.value,
+    focusSection: focusSection.value,
+    projectsHardLock: projectsHardLock.value,
+    isSnapping,
+    wheelAccumulator: Number(wheelAccumulator.toFixed(2)),
+    ...payload
+  };
+
+  if (!Array.isArray(window.__LOCK_DEBUG__)) {
+    window.__LOCK_DEBUG__ = [];
+  }
+
+  window.__LOCK_DEBUG__.push(point);
+  if (window.__LOCK_DEBUG__.length > 1200) {
+    window.__LOCK_DEBUG__.shift();
+  }
+
+  console.debug('[LockDebug][MainLayout]', point);
+};
+
+const emitProjectsSnapState = (snapping) => {
+  window.dispatchEvent(new CustomEvent('projects-snap-state-change', {
+    detail: { snapping }
+  }));
+};
+
+const getTopNavOffset = () => {
+  const nav = document.querySelector('.top-nav');
+  if (nav instanceof HTMLElement) {
+    return nav.offsetHeight;
+  }
+
+  return 96;
+};
+
+const alignSectionTop = (key, immediate = false, duration = 1.1) => {
+  const target = sectionRefs.value[key];
+  const lenis = lenisInstance.value;
+
+  if (!target || !lenis) {
+    return;
+  }
+
+  lenis.scrollTo(target, {
+    offset: -getTopNavOffset(),
+    duration: immediate ? 0 : duration,
+    immediate
+  });
+};
+
+const getProjectsTopDelta = () => {
+  const projectsEl = sectionRefs.value.projects;
+  if (!(projectsEl instanceof HTMLElement)) {
+    return null;
+  }
+
+  const navOffset = getTopNavOffset();
+  return projectsEl.getBoundingClientRect().top - navOffset;
+};
+
+const canStopProjectsAtCurrentPosition = () => {
+  const delta = getProjectsTopDelta();
+  if (delta == null) {
+    return false;
+  }
+
+  return Math.abs(delta) <= PROJECTS_LOCK_DELTA_TOLERANCE;
+};
+
+const scheduleProjectsLockRetry = () => {
+  if (projectsLockRetryTimer) {
+    clearTimeout(projectsLockRetryTimer);
+    projectsLockRetryTimer = null;
+  }
+
+  projectsLockRetryTimer = setTimeout(() => {
+    const lenis = lenisInstance.value;
+    if (!lenis) {
+      return;
     }
-  } else if (e.deltaY < -50) { // Scroll Up -> Prev
-    if (currentIndex > 0) {
-      navigate(routesOrder[currentIndex - 1]);
+
+    if (!projectsHardLock.value || activeSection.value !== 'projects' || isSnapping) {
+      return;
     }
+
+    const delta = getProjectsTopDelta();
+    pushLockDebug('hardLockRetryCheck', {
+      projectsTopDelta: delta == null ? null : Number(delta.toFixed(2))
+    });
+
+    if (canStopProjectsAtCurrentPosition()) {
+      pushLockDebug('hardLockStopAfterRetry');
+      lenis.stop();
+      return;
+    }
+
+    scheduleProjectsLockRetry();
+  }, 48);
+};
+
+const setSectionRef = (key) => (el) => {
+  if (el) {
+    sectionRefs.value[key] = el;
   }
 };
 
-const navigate = (path) => {
-  isNavigating = true;
-  router.push(path);
-  setTimeout(() => {
-    isNavigating = false;
-  }, 1000); // Debounce duration matching transition time
+const scrollToSection = (key) => {
+  const target = sectionRefs.value[key];
+
+  if (!target) {
+    return;
+  }
+
+  const lenis = lenisInstance.value;
+
+  if (lenis) {
+    // 导航栏点击时确保 Lenis 处于运行状态（Projects 锁定时 Lenis 会被 stop）
+    projectsHardLock.value = false;
+    lenis.start();
+    alignSectionTop(key, false);
+  } else {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (route.path !== `/${key}`) {
+    isInternalRouteUpdate = true;
+    router.replace(`/${key}`).finally(() => {
+      isInternalRouteUpdate = false;
+    });
+  }
 };
 
-const onBeforeLeave = (el) => {
-  // Add page-leaving class to trigger stagger exit animation
-  el.classList.add('page-leaving');
-};
+const sectionClass = (key) => ({
+  'is-active-section': activeSection.value === key,
+  'is-focus-section': focusSection.value === key
+});
 
-// --- 聚光灯 + 点阵 ---
-const mouseX = ref(0);
-const mouseY = ref(0);
-const isMouseInPage = ref(false);
-const dotCanvas = ref(null);
+const releaseSnapLock = () => {
+  if (snapCooldownTimer) {
+    clearTimeout(snapCooldownTimer);
+    snapCooldownTimer = null;
+  }
 
-// 绘制点阵：每个 160px 网格单元放 2×2 = 4 个圆点
-function drawDots() {
-  const canvas = dotCanvas.value;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = window.innerWidth;
-  const H = window.innerHeight;
-  canvas.width = W;
-  canvas.height = H;
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(180, 220, 255, 0.6)';
+  snapCooldownTimer = setTimeout(() => {
+    isSnapping = false;
+    emitProjectsSnapState(false);
 
-  const gridSize = 160; // 与 cross-grid-background 一致
-  const dotRadius = 3;
-  // 每格 4 个点：坐标偏移分别在 40px 和 120px
-  const offsets = [40, 120];
-  const cols = Math.ceil(W / gridSize) + 1;
-  const rows = Math.ceil(H / gridSize) + 1;
+    const lenis = lenisInstance.value;
+    if (
+      pendingProjectsLockWhenSnapEnds &&
+      lenis &&
+      activeSection.value === 'projects' &&
+      projectsHardLock.value
+    ) {
+      const delta = getProjectsTopDelta();
+      pushLockDebug('hardLockAfterSnapEnd', {
+        projectsTopDelta: delta == null ? null : Number(delta.toFixed(2))
+      });
 
-  // 复用同一个 Path2D，性能更好
-  const circlePath = new Path2D();
-  circlePath.arc(0, 0, dotRadius, 0, Math.PI * 2);
-
-  for (let col = 0; col < cols; col++) {
-    for (let row = 0; row < rows; row++) {
-      for (const ox of offsets) {
-        for (const oy of offsets) {
-          const x = col * gridSize + ox;
-          const y = row * gridSize + oy;
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.fill(circlePath);
-          ctx.restore();
-        }
+      if (canStopProjectsAtCurrentPosition()) {
+        lenis.stop();
+      } else {
+        scheduleProjectsLockRetry();
       }
     }
+
+    pendingProjectsLockWhenSnapEnds = false;
+  }, 1300);
+};
+
+const snapToNeighborSection = (direction) => {
+  const currentIndex = navItems.findIndex((item) => item.key === activeSection.value);
+  if (currentIndex === -1) {
+    return;
   }
-}
 
-// 仅对点阵 canvas 生效的聚光灯 mask
-// 始终保持 maskImage（即使鼠标离开），只靠 opacity 渐隐
-// 防止移除 mask 时点阵瞬间全部闪现的 bug
-const dotMaskStyle = computed(() => {
-  const m = `radial-gradient(circle 300px at ${mouseX.value}px ${mouseY.value}px,
-    black 0%,
-    black 55%,
-    transparent 78%)`;
-  return {
-    WebkitMaskImage: m,
-    maskImage: m,
-    opacity: isMouseInPage.value ? '1' : '0',
-  };
-});
+  const nextIndex = Math.min(navItems.length - 1, Math.max(0, currentIndex + direction));
+  if (nextIndex === currentIndex) {
+    pushLockDebug('snapToNeighborSkip', {
+      reason: 'sameIndex',
+      direction,
+      currentIndex
+    });
+    return;
+  }
 
-const handleGlobalMouseMove = (e) => {
-  mouseX.value = e.clientX;
-  mouseY.value = e.clientY;
-  if (!isMouseInPage.value) isMouseInPage.value = true;
+  isSnapping = true;
+  emitProjectsSnapState(true);
+  pushLockDebug('snapToNeighborStart', {
+    direction,
+    currentIndex,
+    nextIndex,
+    nextKey: navItems[nextIndex].key
+  });
+  scrollToSection(navItems[nextIndex].key);
+  releaseSnapLock();
 };
 
-const handleMouseLeaveWindow = () => {
-  isMouseInPage.value = false;
+const handleGlobalWheel = (event) => {
+  if (event.defaultPrevented) {
+    return;
+  }
+
+  const target = event.target;
+  if (target instanceof Element && target.closest('.markdown-scroll-wrapper')) {
+    return;
+  }
+
+  const deltaY = event.deltaY;
+
+  if (activeSection.value === 'projects' && projectsHardLock.value) {
+    // locked 仅在 progress 处于中间状态，此时阻止任何方向的 section 切换
+    wheelAccumulator = 0;
+    pushLockDebug('wheelBlockedByHardLock', {
+      deltaY: Number(deltaY.toFixed(2))
+    });
+    event.preventDefault();
+    return;
+  }
+
+  if (Math.abs(deltaY) < 4) {
+    pushLockDebug('wheelIgnoredSmallDelta', {
+      deltaY: Number(deltaY.toFixed(2))
+    });
+    return;
+  }
+
+  event.preventDefault();
+
+  if (isSnapping) {
+    wheelAccumulator = 0;
+    pushLockDebug('wheelIgnoredSnapping', {
+      deltaY: Number(deltaY.toFixed(2))
+    });
+    return;
+  }
+
+  wheelAccumulator += deltaY;
+  if (Math.abs(wheelAccumulator) < 60) {
+    pushLockDebug('wheelAccumulate', {
+      deltaY: Number(deltaY.toFixed(2)),
+      wheelAccumulator: Number(wheelAccumulator.toFixed(2))
+    });
+    return;
+  }
+
+  const direction = wheelAccumulator > 0 ? 1 : -1;
+  pushLockDebug('wheelTriggerSnap', {
+    deltaY: Number(deltaY.toFixed(2)),
+    direction,
+    wheelAccumulator: Number(wheelAccumulator.toFixed(2))
+  });
+  wheelAccumulator = 0;
+  snapToNeighborSection(direction);
 };
 
-onMounted(() => {
-  window.addEventListener('wheel', handleWheel);
-  window.addEventListener('mousemove', handleGlobalMouseMove);
-  document.documentElement.addEventListener('mouseleave', handleMouseLeaveWindow);
-  window.addEventListener('resize', drawDots);
-  setTimeout(drawDots, 0);
-});
+const handleProjectsHardLockChange = (event) => {
+  const previousLock = projectsHardLock.value;
+  const nextLock = Boolean(event?.detail?.locked);
+  projectsHardLock.value = nextLock;
 
-onUnmounted(() => {
-  window.removeEventListener('wheel', handleWheel);
-  window.removeEventListener('mousemove', handleGlobalMouseMove);
-  document.documentElement.removeEventListener('mouseleave', handleMouseLeaveWindow);
-  window.removeEventListener('resize', drawDots);
-});
+  pushLockDebug('hardLockEvent', {
+    wasLock: previousLock,
+    nextLock
+  });
+
+  const lenis = lenisInstance.value;
+  if (!lenis) {
+    return;
+  }
+
+  if (projectsLockRetryTimer) {
+    clearTimeout(projectsLockRetryTimer);
+    projectsLockRetryTimer = null;
+  }
+
+  wheelAccumulator = 0;
+
+  if (activeSection.value === 'projects' && nextLock) {
+    if (isSnapping) {
+      pendingProjectsLockWhenSnapEnds = true;
+      pushLockDebug('hardLockDeferredBySnapping');
+      return;
+    }
+
+    const delta = getProjectsTopDelta();
+    pushLockDebug('hardLockTryStop', {
+      wasLock: previousLock,
+      projectsTopDelta: delta == null ? null : Number(delta.toFixed(2))
+    });
+
+    if (canStopProjectsAtCurrentPosition()) {
+      pushLockDebug('hardLockStopLenisImmediate');
+      lenis.stop();
+    } else {
+      pushLockDebug('hardLockWaitForAlignedPosition');
+      lenis.start();
+      scheduleProjectsLockRetry();
+    }
+    return;
+  } else {
+    pendingProjectsLockWhenSnapEnds = false;
+    pushLockDebug('hardLockReleaseStartLenis');
+    lenis.start();
+  }
+};
+
+const syncFromRoute = () => {
+  const key = String(route.meta?.section || '').trim();
+  if (!key) {
+    return;
+  }
+
+  if (key === activeSection.value) {
+    focusSection.value = key;
+    return;
+  }
+
+  activeSection.value = key;
+  focusSection.value = key;
+
+  nextTick(() => {
+    const target = sectionRefs.value[key];
+    if (!target) {
+      return;
+    }
+
+    const lenis = lenisInstance.value;
+    if (lenis) {
+      alignSectionTop(key, false);
+    } else {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+};
+
+const observeSections = () => {
+  sectionObserver = new IntersectionObserver(
+    (entries) => {
+      const visibleEntries = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+      if (!visibleEntries.length) {
+        return;
+      }
+
+      const key = visibleEntries[0].target.id.replace('section-', '');
+      if (key) {
+        activeSection.value = key;
+        focusSection.value = key;
+
+        if (route.path !== `/${key}`) {
+          isInternalRouteUpdate = true;
+          router.replace(`/${key}`).finally(() => {
+            isInternalRouteUpdate = false;
+          });
+        }
+      }
+    },
+    {
+      threshold: [0.2, 0.4, 0.6],
+      rootMargin: '-28% 0px -28% 0px'
+    }
+  );
+
+  navItems.forEach((item) => {
+    const el = sectionRefs.value[item.key];
+    if (el) {
+      sectionObserver.observe(el);
+    }
+  });
+};
 
 const currentPageIndex = computed(() => {
-  const path = route.path.toLowerCase();
-  if (path.includes('identity')) return '01';  
-  if (path.includes('projects')) return '02';
-  if (path.includes('blog')) return '03';
-  if (path.includes('music')) return '04';
-  if (path.includes('contact')) return '05'; 
-  return '00';
+  const currentIndex = navItems.findIndex((item) => item.key === activeSection.value);
+  return String(currentIndex + 1).padStart(2, '0');
 });
 
 const indicatorPosition = computed(() => {
-  const path = route.path.toLowerCase();
-  
-  if (path.includes('identity')) return '0%';
-  if (path.includes('projects')) return '25%';
-  if (path.includes('blog')) return '50%';
-  if (path.includes('music')) return '75%';
-  if (path.includes('contact')) return '100%';
-  
-  return '0%';
-});
+  const currentIndex = navItems.findIndex((item) => item.key === activeSection.value);
+  if (currentIndex <= 0) {
+    return '0%';
+  }
 
-// Generate random triangles for background
-const triangles = ref([]);
+  const ratio = currentIndex / (navItems.length - 1);
+  return `${ratio * 100}%`;
+});
 
 onMounted(() => {
   triangles.value = Array.from({ length: 30 }, (_, i) => {
-    const size = 3 + Math.random() * 20; 
-    const floatDuration = 18 + Math.random() * 20; 
-    const floatDelay = -Math.random() * 40; 
+    const size = 3 + Math.random() * 20;
+    const floatDuration = 18 + Math.random() * 20;
+    const floatDelay = -Math.random() * 40;
     const xPos = Math.random() * 100;
-  
-    // Custom breathing/opacity behavior for each
-    const baseOpacity = 0.1 + Math.random() * 0.15;
-    const peakOpacity = baseOpacity + 0.3; // Increased breathing range
 
-    // Faster breathing cycle inside the movement (Sine wave simulation)
-    const pulseDuration = 2 + Math.random() * 4; 
-    const pulseDelay = -Math.random() * 10; // Random phase
+    const baseOpacity = 0.1 + Math.random() * 0.15;
+    const peakOpacity = baseOpacity + 0.3;
+
+    const pulseDuration = 2 + Math.random() * 4;
+    const pulseDelay = -Math.random() * 10;
 
     return {
       id: i,
       style: {
         width: `${size}px`,
         height: `${size}px`,
-        // Use CSS variables so we can use animation shorthand in CSS
         '--x-pos': `${xPos}vw`,
         '--float-duration': `${floatDuration}s`,
         '--float-delay': `${floatDelay}s`,
@@ -278,11 +596,46 @@ onMounted(() => {
       }
     };
   });
+
+  observeSections();
+  syncFromRoute();
+
+  pushLockDebug('mounted');
+
+  window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+  window.addEventListener('projects-hard-lock-change', handleProjectsHardLockChange);
+});
+
+watch(
+  () => route.path,
+  () => {
+    if (isInternalRouteUpdate) {
+      return;
+    }
+    syncFromRoute();
+  }
+);
+
+onUnmounted(() => {
+  sectionObserver?.disconnect();
+
+  pushLockDebug('unmounted');
+
+  if (snapCooldownTimer) {
+    clearTimeout(snapCooldownTimer);
+  }
+
+  if (projectsLockRetryTimer) {
+    clearTimeout(projectsLockRetryTimer);
+  }
+
+  window.removeEventListener('wheel', handleGlobalWheel);
+  window.removeEventListener('projects-hard-lock-change', handleProjectsHardLockChange);
+  emitProjectsSnapState(false);
 });
 </script>
 
-<style>
-/* 全局样式，控制 Pixi 背景切换动画 */
+<style scoped>
 .pixi-fade-enter-active,
 .pixi-fade-leave-active {
   transition: opacity 1s ease;
@@ -299,35 +652,26 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 4; /* 高于 spotlight-overlay(3)，不被遑罩；低于主内容(10) */
+  z-index: 4;
   pointer-events: none;
 }
-</style>
 
-<style scoped>
-
-/* 容器 */
 .app-container {
   min-height: 100vh;
-  background-color: transparent; /* Changed from #050505 to transparent to show body bg + pixi */
   color: white;
   font-family: 'Noto Sans SC', sans-serif;
-  overflow: hidden;
   position: relative;
 }
 
-/* 背景特效 - 简洁网格背景 */
 .cross-grid-background {
   position: fixed;
   inset: 0;
-  z-index: 1; /* Above Pixi */
+  z-index: 1;
   pointer-events: none;
   opacity: 1;
-  background-color: transparent; /* Remove solid background */
+  background-color: transparent;
   background-image:
-    /* 水平线 */
     linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
-    /* 垂直线 */
     linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
   background-size: 160px 160px;
   background-position: 0 0;
@@ -342,7 +686,6 @@ onMounted(() => {
   background-size: 40px 40px;
 }
 
-/* Triangle Layer */
 .triangle-layer {
   position: fixed;
   inset: 0;
@@ -358,26 +701,16 @@ onMounted(() => {
   background: transparent;
   width: 0;
   height: 0;
-  
-  /* Solid Triangle using CSS Clip Path - Points Up naturally (50% 0%) */
-  background-color: rgba(200, 200, 200, 0.6); 
+  background-color: rgba(200, 200, 200, 0.6);
   clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-  
-  /* Remove old background image settings */
-  background-image: none;
-  
-  /* Floating animation with independent timings */
-  animation: 
-    float-up var(--float-duration, 20s) linear infinite, 
+  animation:
+    float-up var(--float-duration, 20s) linear infinite,
     breathe var(--pulse-duration, 4s) ease-in-out infinite;
-    
   animation-delay: var(--float-delay, 0s), var(--pulse-delay, 0s);
-  
   will-change: transform, opacity;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); 
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-/* Upward movement - strictly vertical */
 @keyframes float-up {
   0% {
     transform: translate3d(var(--x-pos), 110vh, 0);
@@ -387,7 +720,6 @@ onMounted(() => {
   }
 }
 
-/* Independent breathing animation (Sine-like via ease-in-out) */
 @keyframes breathe {
   0%, 100% {
     opacity: var(--base-opacity, 0.1);
@@ -405,20 +737,6 @@ onMounted(() => {
   }
 }
 
-/* 点阵画布：仅在鼠标聚光灯范围内显示背景方阵点 */
-.dot-matrix {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: block;
-  z-index: 3; /* 在 triangle-layer(2) 之上、Pixi(4) 之下 */
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.2s ease-in-out;
-}
-
 .scan-effect {
   position: fixed;
   inset: 0;
@@ -430,7 +748,6 @@ onMounted(() => {
   background-size: 100% 4px, 3px 100%;
 }
 
-/* 顶部导航 */
 .top-nav {
   position: fixed;
   top: 0;
@@ -479,13 +796,23 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.2);
   display: none;
 }
-@media (min-width: 640px) { .nav-divider { display: block; } }
+
+@media (min-width: 640px) {
+  .nav-divider {
+    display: block;
+  }
+}
 
 .nav-links {
   display: none;
   gap: 32px;
 }
-@media (min-width: 768px) { .nav-links { display: flex; } }
+
+@media (min-width: 768px) {
+  .nav-links {
+    display: flex;
+  }
+}
 
 .nav-item {
   display: flex;
@@ -494,12 +821,14 @@ onMounted(() => {
   text-decoration: none;
   color: #6b7280;
   transition: all 0.3s;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
 }
 
-.nav-item:hover, .nav-item.router-link-active {
-  color: #22d3ee;
-}
-.nav-item.router-link-active .item-label, .nav-item:hover .item-label {
+.nav-item:hover,
+.nav-item.active {
   color: #22d3ee;
 }
 
@@ -521,7 +850,6 @@ onMounted(() => {
   gap: 24px;
 }
 
-/* Terminal Link Styling */
 .terminal-link {
   padding: 8px 16px;
   border: 1px solid rgba(34, 211, 238, 0.3);
@@ -545,19 +873,6 @@ onMounted(() => {
   color: rgba(34, 211, 238, 0.7);
 }
 
-.icon-link {
-  color: white;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 700;
-  opacity: 0.8;
-  transition: color 0.3s;
-}
-.icon-link:hover {
-  color: #22d3ee;
-}
-
-/* 右侧侧边栏 */
 .right-sidebar {
   position: fixed;
   right: 40px;
@@ -567,16 +882,16 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  pointer-events: none; /* Make click-through */
+  pointer-events: none;
 }
 
 .page-number {
   position: relative;
   margin-bottom: 24px;
   text-align: center;
-  width: 64px;  /* Fixed width to prevent collapse */
-  height: 48px; /* Fixed height matching font-size */
-  display: flex;     /* Use flex to center absolute child if needed, though text-align works for inline blocks usually */
+  width: 64px;
+  height: 48px;
+  display: flex;
   justify-content: center;
 }
 
@@ -587,19 +902,7 @@ onMounted(() => {
   color: #22d3ee;
   display: block;
   width: 100%;
-  /* Horizontal cut at the bottom 25% */
   clip-path: inset(0 0 25% 0);
-}
-
-.page-label {
-  position: absolute;
-  right: -32px;
-  top: 4px;
-  font-size: 10px;
-  opacity: 0.3;
-  font-family: monospace;
-  font-style: normal; /* Removed italic */
-  white-space: nowrap;
 }
 
 .progress-track {
@@ -620,7 +923,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: top 0.5s ease-in-out;
+  transition: top 0.35s ease;
 }
 
 .indicator-line {
@@ -629,80 +932,87 @@ onMounted(() => {
   background: #22d3ee;
 }
 
-/* 主内容区 */
 .main-content {
   padding-top: 96px;
-  min-height: 100vh;
   width: 100%;
   position: relative;
-  z-index: 10; /* Ensure content is above background layers */
+  z-index: 10;
   box-sizing: border-box;
-  background-color: transparent; /* 透明以显示底层格子背景 */
 }
 
-/* 视图包装器 - 防止过渡时白屏 */
-.view-wrapper {
-  width: 100%;
+.story-section {
   min-height: calc(100vh - 96px);
-  background-color: transparent; /* 透明以显示底层格子背景 */
+  height: calc(100vh - 96px);
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(26px) scale(0.985);
+  opacity: 0.82;
 }
 
-/* Footer */
+.story-section.is-active-section {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.story-section.is-focus-section {
+  animation: section-parallax-focus 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes section-parallax-focus {
+  0% {
+    transform: translateY(34px) scale(0.975);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.section-divider {
+  width: 100%;
+  position: relative;
+  z-index: 12;
+}
+
 .app-footer {
   position: fixed;
-  bottom: 0px;
+  bottom: 0;
   left: 24px;
   z-index: 90;
   font-size: 8px;
   letter-spacing: 0.4em;
   opacity: 0.3;
   text-transform: uppercase;
-  padding-bottom: 16px; 
+  padding-bottom: 16px;
 }
 
-/* 颜色工具类 */
-.dark-cyan { color: #22d3ee; }
-
-/* 路由转场: 垂直向上 (Revert to Vertical Up) */
-/* Enter from Bottom, Leave to Top */
-
-.parallax-enter-active,
-.parallax-leave-active {
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+.num-slide-enter-active,
+.num-slide-leave-active {
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
 }
 
-/* Entering page (from Bottom) */
-.parallax-enter-from {
+.num-slide-enter-from {
   opacity: 0;
-  transform: translateY(60px);
+  transform: translateY(20px);
 }
 
-/* Leaving page (to Top) */
-.parallax-leave-to {
+.num-slide-leave-to {
   opacity: 0;
-  transform: translateY(-60px);
+  transform: translateY(-20px);
 }
 
-/* 🎵 Custom Leave for Music Page: No translation, just fade */
-/* This will affect the leaving Music page if route.name='music' added to wrapper class */
-.view-wrapper.music.parallax-leave-to {
-  transform: translateY(0) !important;
-  opacity: 0;
-}
-
-.parallax-enter-to,
-.parallax-leave-from {
+.num-slide-enter-to,
+.num-slide-leave-from {
   opacity: 1;
   transform: translateY(0);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.4s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>
