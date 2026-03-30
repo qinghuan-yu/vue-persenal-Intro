@@ -6,6 +6,7 @@ import pcbUrl from '@/assets/pcb.png';     // 之前是 pcb2.png
 import pianoUrl from '@/assets/piano.png';
 import aiUrl from '@/assets/AI.png';
 import vueUrl from '@/assets/vue.png';
+import calendarUrl from '@/assets/calendar.png';
 
 export const ASSETS = {
   // 项目展示图
@@ -14,6 +15,7 @@ export const ASSETS = {
   PIANO: pianoUrl,
   AI: aiUrl,
   VUE: vueUrl,
+  CALENDAR: calendarUrl,
 };
 
 // 预加载列表：将所有需要预加载的资源路径提取出来
