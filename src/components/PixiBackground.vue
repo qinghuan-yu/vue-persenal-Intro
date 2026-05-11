@@ -43,40 +43,21 @@ const updateParticlesByRoute = async (path) => {
   }
 
   const commonOptions = { type: 'image', sampleRate: 4 };
+  const resetParticles = () => morphToShapes([]);
 
   if (path.includes('identity')) {
     // Identity 页面：散点模式
-    await morphToShapes([]);
+    await resetParticles();
   } else if (path.includes('projects')) {
     // Projects 页面：默认显示 PCB1 (pcbUrl) 在右侧 (0.75)，列表在左侧
     await morphToShapes([
       { source: ASSETS.PROJ_MAIN, options: { ...commonOptions, layoutX: 0.75 } }
     ]);
-  } else if (path.includes('contact')) {
-    // Contact 页面：散点模式
-    await morphToShapes([]);
-  } else if (path.includes('blog')) {
-    // Blog 页面：散点模式
-    await morphToShapes([]);
   } else {
     // 默认：散点模式
-    await morphToShapes([]);
+    await resetParticles();
   }
 };
-
-// 暴露方法给外部调用（用于 Projects 页面的项目切换）
-const updateProjectImage = async (imageUrl, layoutX = 0.35) => {
-  if (!morphToShapes) {
-    return;
-  }
-  const result = await morphToShapes([
-    { source: imageUrl, options: { type: 'image', sampleRate: 4, layoutX } }
-  ]);
-};
-
-defineExpose({
-  updateProjectImage
-});
 </script>
 
 <style scoped>

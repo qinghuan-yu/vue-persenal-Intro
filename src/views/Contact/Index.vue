@@ -83,7 +83,6 @@ const channels = [
   {
     key: 'github',
     label: 'GITHUB',
-    sub: 'SRC CODE',
     desc: '浏览项目列表以及源代码',
     img: getAssetUrl('githubicon.png'),
     link: 'https://github.com/qinghuan-yu'
@@ -91,7 +90,6 @@ const channels = [
   {
     key: 'social',
     label: 'WECHAT & QQ',
-    sub: 'IM LINK',
     desc: '通过二维码添加好友',
     img: getAssetUrl('desktop.png'),
     link: null
@@ -99,7 +97,6 @@ const channels = [
   {
     key: 'steam',
     label: 'STEAM',
-    sub: 'GAMING',
     desc: 'steam个人资料链接',
     img: getAssetUrl('game.png'),
     link: 'https://steamcommunity.com/id/qing_uu/'
@@ -107,7 +104,6 @@ const channels = [
   {
     key: 'music',
     label: 'NETEASE MUSIC',
-    sub: 'AUDIO //',
     desc: '网易云音乐歌手主页',
     img: getAssetUrl('vinyl.png'),
     link: 'https://music.163.com/#/artist?id=100570638'
@@ -115,7 +111,6 @@ const channels = [
   {
     key: 'mail',
     label: 'MAIL',
-    sub: 'CONTACT',
     desc: 'Reliarc.me@outlook.com',
     img: getAssetUrl('letter.png'),
     link: 'mailto:Reliarc.me@outlook.com'
@@ -372,20 +367,6 @@ const openLink = (url) => {
   font-weight: 700;
 }
 
-.item-subtitle-en {
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.05em;
-  font-weight: 400;
-}
-
-.ak-list-item:hover .item-subtitle-en,
-.ak-list-item.active .item-subtitle-en {
-  color: inherit;
-}
-
 .item-separator {
   width: 100%;
   height: 1px;
@@ -403,14 +384,6 @@ const openLink = (url) => {
   background: #22d3ee;
   box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
   transform: scaleY(2);
-}
-
-
-.deco-line {
-  width: 40px;
-  height: 2px;
-  background: white;
-  margin-bottom: 10px;
 }
 
 /* Visual Stage */
@@ -608,10 +581,6 @@ const openLink = (url) => {
   .sidebar-header {
     margin: 0;
     font-size: 16px;
-  }
-
-  .channel-list {
-    display: none;
   }
 
   .scene-wrapper {

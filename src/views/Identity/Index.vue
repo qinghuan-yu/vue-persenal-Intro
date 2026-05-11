@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted } from 'vue';
 import { preloadResources } from '@/utils/resourceLoader';
 import { hasInitialLoaded } from '@/utils/globalState';
 
@@ -88,11 +88,7 @@ const containerRef = ref(null);
 // 定义资源清单
 const resources = [
   ...assetsFileUrls.map((url) => ({ type: 'file', url })),
-  ...contactPngUrls.map((url) => ({ type: 'image', url })),
-  { type: 'component', importFn: () => import('@/views/Projects/Index.vue') },
-  { type: 'component', importFn: () => import('@/views/Music/Index.vue') },
-  { type: 'component', importFn: () => import('@/views/Contact/Index.vue') },
-  { type: 'dummy' }, { type: 'dummy' }, { type: 'dummy' }
+  ...contactPngUrls.map((url) => ({ type: 'image', url }))
 ];
 
 /* 

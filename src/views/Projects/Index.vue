@@ -49,7 +49,6 @@
             appear
             @before-enter="onSwitchBeforeEnter"
             @enter="onSwitchEnter"
-            @after-enter="onSwitchAfterEnter"
         >
           <!-- Wrapper keyed by project to force re-render transition -->
           <div :key="currentProject.title" class="switch-container">
@@ -124,12 +123,6 @@
       <transition 
         name="bottom-bar"
         appear
-        @before-enter="onBottomBarBeforeEnter"
-        @enter="onBottomBarEnter"
-        @after-enter="onBottomBarAfterEnter"
-        @before-leave="onBottomBarBeforeLeave"
-        @leave="onBottomBarLeave"
-        @after-leave="onBottomBarAfterLeave"
       >
         <div v-if="selectedIndex !== -1" class="bottom-bar-area">
            <div class="bar-progress-bg">
@@ -210,14 +203,6 @@ const closeDetail = () => {
   updateParticles(defaultPcb, 0.75);
 };
 
-// Bottom Bar Transition Hooks
-const onBottomBarBeforeEnter = (el) => {};
-const onBottomBarEnter = (el) => {};
-const onBottomBarAfterEnter = (el) => {};
-const onBottomBarBeforeLeave = (el) => {};
-const onBottomBarLeave = (el) => {};
-const onBottomBarAfterLeave = (el) => {};
-
 // Force Reflow for Project Switch Animation
 // Without this, the browser might batch the start/end styles causing a flash/jump
 
@@ -231,10 +216,6 @@ const onSwitchEnter = (el) => {
     el.style.opacity = '';
     // Ensure reflow again
     void el.offsetHeight;
-};
-
-const onSwitchAfterEnter = (el) => {
-    // Transition Finished
 };
 
 // --- Lifecycle ---
@@ -370,12 +351,6 @@ onUnmounted(() => {
 /* Layer 1 (Title) leaves last */
 .project-switch-leave-active .stagger-item.l-1 { transition-delay: 0.4s; }
 
-/* Layer 2 (Desc) leaves next */
-.project-switch-leave-active .stagger-item.l-2 { transition-delay: 0.1s; }
-
-/* Layer 1 (Title) leaves last */
-.project-switch-leave-active .stagger-item.l-1 { transition-delay: 0.2s; }
-
 /* 
 @keyframes bounce-enter {
    0% { opacity: 0; transform: translateY(40px); }
@@ -383,12 +358,6 @@ onUnmounted(() => {
    100% { opacity: 1; transform: translateY(0); }
 } 
 */
-
-
-/* Delays Exit (Top to Bottom) */
-.project-switch-leave-active .e-1 { transition-delay: 0.0s; } /* Big starts first */
-.project-switch-leave-active .e-2 { transition-delay: 0.2s; } /* Text starts later */
-.project-switch-leave-active .e-3 { transition-delay: 0.3s; }
 
 
 /* Removed unused keyframes simple-fade-up */
@@ -409,14 +378,6 @@ onUnmounted(() => {
 .projects-container.page-leaving .page-exit-item {
   opacity: 0;
   transform: translateY(-30px);
-}
-
-/* --- Pixi Layer --- */
-.pixi-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none; /* Let clicks pass through */
 }
 
 /* --- UI Layer --- */
@@ -655,14 +616,6 @@ onUnmounted(() => {
   pointer-events: none; /* Children are passthrough */
 }
 
-.idx-big {
-  font-size: 80px;
-  font-weight: 700;
-  color: #22d3ee;
-  line-height: 0.8;
-  font-family: 'Arial', sans-serif; /* Cleaner font */
-}
-
 .text-link-box {
   display: inline-flex;
   align-items: center;
@@ -871,11 +824,6 @@ onUnmounted(() => {
   font-size: 10px;
   letter-spacing: 0.1em;
   opacity: 0.6;
-}
-
-/* --- Transitions --- */
-.list-hidden {
-  pointer-events: none;
 }
 
 /* Ensure container is absolute to prevent layout jumps during out-in switch */

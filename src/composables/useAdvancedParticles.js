@@ -1,4 +1,4 @@
-import { Container, Sprite, ParticleContainer, Texture, Graphics, Particle as PixiParticle, Application } from 'pixi.js';
+import { ParticleContainer, Graphics, Particle as PixiParticle } from 'pixi.js';
 
 /*
     useAdvancedParticles

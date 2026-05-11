@@ -25,21 +25,14 @@
         </div>
         <div class="nav-divider"></div>
         <div class="nav-links">
-          <router-link to="/identity" class="nav-item">
-            <span class="item-label">IDENTITY</span>
-            <span class="item-sub">简介</span>
-          </router-link>
-          <router-link to="/projects" class="nav-item">
-            <span class="item-label">PROJECTS</span>
-            <span class="item-sub">项目</span>
-          </router-link>
-          <router-link to="/music" class="nav-item">
-            <span class="item-label">MUSIC</span>
-            <span class="item-sub">音乐</span>
-          </router-link>
-          <router-link to="/contact" class="nav-item">
-             <span class="item-label">CONTACT</span>
-             <span class="item-sub">联系方式</span>
+          <router-link
+            v-for="item in VIEW_ROUTES"
+            :key="item.name"
+            :to="item.path"
+            class="nav-item"
+          >
+            <span class="item-label">{{ item.label }}</span>
+            <span class="item-sub">{{ item.sub }}</span>
           </router-link>
         </div>
       </div>
@@ -91,11 +84,10 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PixiBackground from '@/components/PixiBackground.vue';
+import { VIEW_ROUTES, VIEW_ROUTE_PATHS } from '@/config/navigation';
 
 const route = useRoute();
 const router = useRouter();
-
-const routesOrder = ['/identity', '/projects', '/music', '/contact'];
 
 let isNavigating = false;
 
@@ -103,17 +95,17 @@ const handleWheel = (e) => {
   if (isNavigating) return;
   
   const currentPath = route.path;
-  const currentIndex = routesOrder.findIndex(p => currentPath.includes(p));
+  const currentIndex = VIEW_ROUTE_PATHS.findIndex(p => currentPath.includes(p));
   
   if (currentIndex === -1) return;
 
   if (e.deltaY > 50) { // Scroll Down -> Next
-    if (currentIndex < routesOrder.length - 1) {
-      navigate(routesOrder[currentIndex + 1]);
+    if (currentIndex < VIEW_ROUTE_PATHS.length - 1) {
+      navigate(VIEW_ROUTE_PATHS[currentIndex + 1]);
     }
   } else if (e.deltaY < -50) { // Scroll Up -> Prev
     if (currentIndex > 0) {
-      navigate(routesOrder[currentIndex - 1]);
+      navigate(VIEW_ROUTE_PATHS[currentIndex - 1]);
     }
   }
 };
@@ -140,23 +132,11 @@ onUnmounted(() => {
 });
 
 const currentPageIndex = computed(() => {
-  const path = route.path.toLowerCase();
-  if (path.includes('identity')) return '01';  
-  if (path.includes('projects')) return '02';
-  if (path.includes('music')) return '03';
-  if (path.includes('contact')) return '04'; 
-  return '00';
+  return VIEW_ROUTES.find((item) => route.path.includes(item.path))?.pageNumber ?? '00';
 });
 
 const indicatorPosition = computed(() => {
-  const path = route.path.toLowerCase();
-  
-  if (path.includes('identity')) return '0%';
-  if (path.includes('projects')) return '33%';
-  if (path.includes('music')) return '66%';
-  if (path.includes('contact')) return '100%';
-  
-  return '0%';
+  return VIEW_ROUTES.find((item) => route.path.includes(item.path))?.progress ?? '0%';
 });
 
 // Generate random triangles for background
@@ -446,17 +426,6 @@ onMounted(() => {
   color: rgba(34, 211, 238, 0.7);
 }
 
-.icon-link {
-  color: white;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 700;
-  opacity: 0.8;
-  transition: color 0.3s;
-}
-.icon-link:hover {
-  color: #22d3ee;
-}
 
 /* 右侧侧边栏 */
 .right-sidebar {
@@ -490,17 +459,6 @@ onMounted(() => {
   width: 100%;
   /* Horizontal cut at the bottom 25% */
   clip-path: inset(0 0 25% 0);
-}
-
-.page-label {
-  position: absolute;
-  right: -32px;
-  top: 4px;
-  font-size: 10px;
-  opacity: 0.3;
-  font-family: monospace;
-  font-style: normal; /* Removed italic */
-  white-space: nowrap;
 }
 
 .progress-track {
